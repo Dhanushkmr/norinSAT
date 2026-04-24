@@ -260,7 +260,8 @@ SAT: False
 ```
 
 Dimension `m = 7` was attempted with the same light symmetry breaking and
-stopped after a few minutes without a result.
+stopped without a result.  The generated formula has 33,344 variables and
+262,535 clauses.
 
 Interpretation:
 

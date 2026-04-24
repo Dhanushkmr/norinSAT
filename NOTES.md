@@ -396,7 +396,8 @@ Current probe results:
   (`h(00...0)=red` and sorted colors incident to `00...0`), with 8,448
   variables and 57,542 clauses.
 - SAT fixed-slice negation for `Q_7`: attempted with the same symmetry breaking
-  and stopped after a few minutes without a result.
+  and stopped without a result.  The formula has 33,344 variables and 262,535
+  clauses.
 
 Counting route:
 
