@@ -437,3 +437,16 @@ Two-layer reachability route:
   separating selected sources from their antipodal targets.
 - This reframes the remaining proof as a directed separation theorem on the
   cube.
+
+Shortest-separation/Tucker candidate:
+
+- Under a hypothetical fixed-slice obstruction, each selected component pair
+  `A_x = C_h(x)(x)` and `B_x = C_{1-h(x)}(anti(x))` is separated by distance
+  at least two.
+- Choose a closest pair of vertices between `A_x` and `B_x`; label `x` by a
+  signed coordinate on which that closest pair differs.
+- Antipodes swap the two components, so a symmetric tie-break should make this
+  an antipodal signed-coordinate labeling.
+- Arbitrary antipodal signed-coordinate labelings of cube vertices do not force
+  complementary adjacent labels, so the missing lemma must use the fact that
+  the labels arise from shortest red/blue component separations.

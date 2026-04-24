@@ -159,6 +159,64 @@ The hoped-for contradiction is that these antipodal directed cuts cannot be
 chosen consistently in a cube.  This is another possible bridge to Menger,
 Tucker, or Hex-type arguments.
 
+## Shortest-Separation Label Candidate
+
+Assume a fixed-slice obstruction exists for an antipodal label `h`.  For each
+vertex `x`, define two selected components:
+
+```text
+A_x = C_{h(x)}(x)
+B_x = C_{opposite h(x)}(anti(x)).
+```
+
+The obstruction says `A_x` and `B_x` are disjoint.  The boundary lemma improves
+this to:
+
+```text
+dist(A_x, B_x) >= 2.
+```
+
+Choose a closest pair `p_x in A_x`, `q_x in B_x`.  Pick a coordinate where
+`p_x` and `q_x` differ, with sign determined by the direction from `p_x` to
+`q_x`.  This gives a label in `{+1,-1,...,+m,-m}`.
+
+For the antipodal vertex `anti(x)`, the two selected components swap:
+
+```text
+A_anti(x) = B_x
+B_anti(x) = A_x.
+```
+
+So a deterministic symmetric tie-break would give the opposite signed label.
+This is close to the input of Tucker's lemma.
+
+The gap:
+
+> A general antipodal labeling of the vertices of `Q_m` by signed coordinates
+> need not have a complementary edge.
+
+For example in `Q_2`, the labeling
+
+```text
+00 -> +1
+11 -> -1
+10 -> +2
+01 -> -2
+```
+
+is antipodal and has no edge whose endpoint labels are complementary.
+
+So the proof needs to use the extra fact that these labels come from shortest
+component separations, not from an arbitrary antipodal labeling.  A possible
+next lemma is:
+
+> Shortest-separation Tucker lemma.  An antipodal signed-coordinate labeling
+> arising from disjoint red/blue component separations must contain a
+> complementary adjacent pair.
+
+If true, that complementary adjacency should force one of the forbidden
+component intersections.
+
 ## Contradiction Target
 
 Assume the bicross lemma is false.  Then for every antipodal pair, at least one
