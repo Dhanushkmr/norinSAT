@@ -286,6 +286,43 @@ The recommended next run is the all-core portfolio version:
 make bicross-q7-portfolio
 ```
 
+For the unresolved `Q_6` 29-hit frontier, there are two all-core helpers:
+
+```bash
+make bicross-q6-frontier
+make bicross-q6-cubes
+```
+
+The current strongest `Q_6` pair-hit result is:
+
+```bash
+make bicross-q6-hit31-proof
+```
+
+Expected behavior: the first two stages report some UNKNOWN cubes, and the
+final stage reports `Selected cubes SAT: False`.  Together with the first-stage
+UNSAT cubes, this proves `Q_6` has no coloring whose bad vertices hit 31 of the
+32 antipodal pairs.
+
+The next hard frontier is 30 hit pairs.  The best run so far used:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_cube_search.py \
+  -m 6 \
+  --hit-bound 30 \
+  --cube-depth 8 \
+  --cube-mode prefix \
+  --sort-zero-edges \
+  --zero-red-degree-at-most-half \
+  --partial-sym-break 20 \
+  --conflict-budget 20000
+```
+
+That leaves cube indexes `0,1,4,5,12,13,15,28,29,31` UNKNOWN.  Raising the
+budget to 2,000,000 conflicts on those cubes proves all but `4,12,29` UNSAT.
+Cube `4` then timed out across the full PySAT portfolio at 300 seconds per
+solver.
+
 Slice-recursion diagnostics for a `Q_5` near-extremal:
 
 ```bash

@@ -373,11 +373,16 @@ Current evidence:
   but cannot hit 13.  Thus every `Q_5` coloring has at least four bicross
   pairs.
 - Pair-hit SAT for `Q_6`: bad vertices can hit 28 of the 32 antipodal pairs.
-  The full 32-pair obstruction is UNSAT with the zero-vertex symmetry breaks,
-  so every `Q_6` coloring has at least one bicross pair.  Searches for 29, 30,
-  and 31 pair hits did not finish quickly.
+  Pair-hit 31 is UNSAT with coordinate/bit-flip symmetry breaking plus a
+  prefix-cube proof, so every `Q_6` coloring has at least two bicross pairs.
+  Pair-hit 30 is the current hard frontier.
 - A 90-second-per-solver sweep at the unresolved `Q_6` 29-hit frontier timed
   out for `cadical195`, `glucose4`, `maplechrono`, and `kissat404`.
+- A later all-solver 300-second portfolio at 29 hit pairs also timed out.
+- For 30 hit pairs, prefix cubing with `--partial-sym-break 20` proved 253 of
+  256 depth-8 cubes UNSAT under the tested budgets, leaving cube indexes
+  `4,12,29` UNKNOWN.  Cube `4` timed out across all available PySAT backends at
+  300 seconds.
 - The direct `Q_7` full-obstruction CNF has 33,420 variables and 246,175
   clauses with the zero-vertex symmetry breaks.  A 180-second `cadical195` run
   timed out.

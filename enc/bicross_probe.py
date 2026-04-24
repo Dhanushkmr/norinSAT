@@ -22,6 +22,7 @@ from collections import Counter, deque
 from dataclasses import dataclass
 
 from induction_probe import all_edges, anti, build_hypercube_graph, color_components, edge_key, summarize_coloring
+from lex import lex_smaller_eq
 from sat_utils import best_pysat_solver_name, make_pysat_solver, solver_help
 
 
@@ -90,6 +91,16 @@ def insert_coordinate(v, dimension, side):
 
 def remove_coordinate(v, dimension):
     return v[:dimension] + v[dimension + 1 :]
+
+
+def flip_coordinate(v, dimension):
+    return tuple((1 - value) if index == dimension else value for index, value in enumerate(v))
+
+
+def swap_coordinates(v, left, right):
+    values = list(v)
+    values[left], values[right] = values[right], values[left]
+    return tuple(values)
 
 
 def component_data(coloring, m):
@@ -952,6 +963,7 @@ def add_pair_hit_symmetry_breaking(
     vpool,
     sort_zero_edges=False,
     zero_red_degree_at_most_half=False,
+    partial_sym_break=0,
 ):
     zero = zero_vertex(m)
     incident = [r(zero, unit_vertex(m, dimension)) for dimension in range(m)]
@@ -974,6 +986,18 @@ def add_pair_hit_symmetry_breaking(
         )
         clauses.extend(cardinality.clauses)
 
+    if partial_sym_break:
+        _, _, edges = all_edges(m)
+        original = [r(u, v) for u, v in edges]
+
+        for dimension in range(m):
+            transformed = [r(flip_coordinate(u, dimension), flip_coordinate(v, dimension)) for u, v in edges]
+            lex_smaller_eq(clauses, vpool, original, transformed, maxcomparisons=partial_sym_break)
+
+        for left, right in itertools.combinations(range(m), 2):
+            transformed = [r(swap_coordinates(u, left, right), swap_coordinates(v, left, right)) for u, v in edges]
+            lex_smaller_eq(clauses, vpool, original, transformed, maxcomparisons=partial_sym_break)
+
 
 def encode_pair_hit_bound(
     m,
@@ -981,6 +1005,7 @@ def encode_pair_hit_bound(
     solver_name=None,
     sort_zero_edges=False,
     zero_red_degree_at_most_half=False,
+    partial_sym_break=0,
 ):
     try:
         from pysat.card import CardEnc, EncType
@@ -1048,6 +1073,7 @@ def encode_pair_hit_bound(
         vpool,
         sort_zero_edges=sort_zero_edges,
         zero_red_degree_at_most_half=zero_red_degree_at_most_half,
+        partial_sym_break=partial_sym_break,
     )
 
     solver, _ = make_pysat_solver(solver_name)
@@ -1177,6 +1203,7 @@ def solve_pair_hit_bound(args):
         args.solver,
         sort_zero_edges=args.sort_zero_edges,
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
+        partial_sym_break=args.partial_sym_break,
     )
     vertices, _, edges = all_edges(args.m)
     representatives = list(antipodal_vertex_representatives(vertices))
@@ -1192,6 +1219,8 @@ def solve_pair_hit_bound(args):
         print("Symmetry: incident colors at 00...0 sorted", flush=True)
     if args.zero_red_degree_at_most_half:
         print("Symmetry: red degree at 00...0 at most half", flush=True)
+    if args.partial_sym_break:
+        print(f"Symmetry: coordinate/flip lex comparisons up to {args.partial_sym_break}", flush=True)
 
     if args.no_solve:
         write_dimacs(args.tmp_file, vpool.top, clauses)
@@ -1362,6 +1391,12 @@ def parse_args():
         "--zero-red-degree-at-most-half",
         action="store_true",
         help="In pair-hit SAT mode, use color-swap symmetry to bound red degree at 00...0",
+    )
+    parser.add_argument(
+        "--partial-sym-break",
+        type=int,
+        default=0,
+        help="In pair-hit SAT mode, add coordinate/bit-flip lex symmetry breaking with this comparison cap",
     )
     parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model edge list")
     parser.add_argument("--show-components", action="store_true", help="Print red/blue components for shown examples")

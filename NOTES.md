@@ -489,6 +489,34 @@ Dev/SAT setup note:
   `cadical195`, `kissat404`, `cadical153`, `cadical103`, `glucose4`,
   `glucose42`, `maplechrono`, `gluecard4`, `gluecard3`, `maplesat`,
   `maplecm`, `mergesat3`, `minicard`, `minisat22`, `lingeling`.
+- Added `enc/bicross_cube_search.py` for parallel assumption-cube searches on
+  pair-hit formulas.
+
+Latest experiment log:
+
+- Full portfolio, `Q_6`, pair-hit `>=29`, zero-vertex breaks, 300 seconds per
+  solver: every available PySAT backend timed out.
+- Spread cube split for `Q_6`, pair-hit `>=29`, depth 8, 100k conflicts per
+  cube: 128 UNSAT cubes and 128 UNKNOWN cubes.
+- Prefix cube split for `Q_6`, pair-hit `>=29`, depth 8, 20k conflicts per
+  cube: 240 UNSAT cubes and 16 UNKNOWN cubes.  Increasing those 16 to 500k
+  conflicts left all 16 UNKNOWN.
+- Added optional coordinate/bit-flip lex symmetry breaking to the pair-hit
+  encoding (`--partial-sym-break`).
+- With `--partial-sym-break 20`, `Q_6`, pair-hit `>=32` is UNSAT in a short
+  Cadical run, confirming the stronger symmetry path preserves the known full
+  obstruction result.
+- With `--partial-sym-break 20`, `Q_6`, pair-hit `>=31` is UNSAT by prefix
+  cube proof:
+  first 247/256 cubes proved UNSAT at 20k conflicts, 7 of 9 remaining cubes
+  proved UNSAT at 500k conflicts, and the last two cubes (`12,29`) proved
+  UNSAT at 2M conflicts.  Therefore every `Q_6` coloring has at least two
+  bicross antipodal pairs.
+- With `--partial-sym-break 20`, `Q_6`, pair-hit `>=30` is the new hard
+  frontier.  Prefix cubes prove 246/256 UNSAT at 20k conflicts; 7 of the 10
+  remaining cubes prove UNSAT at 2M conflicts; cubes `4,12,29` remain UNKNOWN.
+  Cube `4` also timed out across the full PySAT portfolio at 300 seconds per
+  solver.
 
 One-switch geodesic route:
 

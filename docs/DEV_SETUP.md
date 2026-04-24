@@ -66,5 +66,13 @@ Useful Make targets:
 
 ```bash
 make bicross-q6-frontier
+make bicross-q6-cubes
+make bicross-q6-hit31-proof
 make bicross-q7-portfolio
 ```
+
+`make bicross-q6-frontier` runs a solver portfolio on the unresolved 29-hit
+question.  `make bicross-q6-cubes` instead uses one preferred solver over a
+parallel assumption split of the same formula.
+`make bicross-q6-hit31-proof` replays the cube proof that `Q_6` cannot have
+bad vertices hitting 31 of the 32 antipodal pairs.
