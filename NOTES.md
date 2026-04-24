@@ -1,5 +1,14 @@
 # Norine Induction Notes
 
+## Document Map
+
+- `docs/EXPERIMENT_LOG.md`: chronological record of what worked, what failed,
+  and why the proof-search direction changed.
+- `docs/PROOF_DIRECTION.md`: current mathematical proof target and possible
+  routes to a proof.
+- `docs/REPRODUCING_RESULTS.md`: commands and expected outputs for the current
+  computational evidence.
+
 ## Goal
 
 Use the existing SAT/verification code as a laboratory for a proof of Norine's
