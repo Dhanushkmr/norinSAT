@@ -246,6 +246,7 @@ uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-pa
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-pairs-hit-at-least 12 --solver cadical195
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 6 --sat-pairs-hit-at-least 28 --solver cadical195
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 6 --sat-pairs-hit-at-least 32 --solver cadical195 --sort-zero-edges --zero-red-degree-at-most-half
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 7 --sat-pairs-hit-at-least 64 --solver cadical195 --sort-zero-edges --zero-red-degree-at-most-half --no-solve --tmp-file /tmp/q7_pairhit64.cnf
 ```
 
 Expected behavior:
@@ -256,10 +257,13 @@ Q_5, pair-hit lower bound 13: SAT: False
 Q_5, pair-hit lower bound 12: SAT: True
 Q_6, pair-hit lower bound 28: SAT: True
 Q_6, pair-hit lower bound 32 with symmetry breaks: SAT: False
+Q_7, pair-hit lower bound 64 with symmetry breaks: writes a 33,420-variable, 246,175-clause CNF
 ```
 
 `Q_6` searches for 29, 30, and 31 pair hits were started and stopped after they
-did not finish quickly.
+did not finish quickly.  A later 90-second-per-solver sweep for 29 hit pairs
+also timed out for `cadical195`, `glucose4`, `maplechrono`, and `kissat404`.
+A 180-second `cadical195` run on the `Q_7` 64-hit formula also timed out.
 
 Slice-recursion diagnostics for a `Q_5` near-extremal:
 
@@ -276,6 +280,7 @@ Expected behavior:
 
 - `Actual bad vertices: 14`
 - some coordinate summaries have `full_bad=(7,7)` and `slice_bad=(7,7)`;
+- those summaries have `recursion_score=(overlap=14, extra_full=0, slice_only=0)`;
 - in those summaries, full bad and slice bad match on both sides.
 
 Fixed-slice negation SAT check:

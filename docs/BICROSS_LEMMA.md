@@ -369,6 +369,11 @@ Current evidence:
   The full 32-pair obstruction is UNSAT with the zero-vertex symmetry breaks,
   so every `Q_6` coloring has at least one bicross pair.  Searches for 29, 30,
   and 31 pair hits did not finish quickly.
+- A 90-second-per-solver sweep at the unresolved `Q_6` 29-hit frontier timed
+  out for `cadical195`, `glucose4`, `maplechrono`, and `kissat404`.
+- The direct `Q_7` full-obstruction CNF has 33,420 variables and 246,175
+  clauses with the zero-vertex symmetry breaks.  A 180-second `cadical195` run
+  timed out.
 - Local search in `Q_5` repeatedly finds 12- and 14-bad colorings, but still
   leaves several antipodal pairs with both endpoints in `G`.
 - Doubling a 7-bad `Q_4` coloring into two identical slices of `Q_5`, with all
@@ -425,6 +430,15 @@ Current observations:
   exactly.
 - In other splits, connectors create extra full bad vertices beyond the slice
   bad sets.
+- The slice analyzer reports a recursion score
+  `(overlap, extra_full, slice_only)`.  Perfect inheritance from the two slices
+  is `extra_full = slice_only = 0`.
+- The 14-bad `Q_5` model has three perfect-inheritance splits with score
+  `(14, 0, 0)`.
+- A 28-pair-hit `Q_6` model has no perfect split, but every split has
+  `slice_only = 0`.  Random `Q_3` samples already show `slice_only > 0`, so
+  this is not ordinary monotonicity; it appears tied to near-obstruction
+  structure.
 - This suggests a possible induction theorem: if a full bad set comes close to
   hitting every antipodal pair, then some coordinate split should expose two
   lower-dimensional bad sets that also come close to hitting every pair.

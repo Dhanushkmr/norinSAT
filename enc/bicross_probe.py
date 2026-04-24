@@ -246,6 +246,27 @@ def full_vs_slice_profile(universe, full_bad_projected, slice_bad_projected):
     return tuple((key[0], key[1], count) for key, count in sorted(profile.items()))
 
 
+def full_vs_slice_count(profile, full_bad, slice_bad):
+    for full, sliced, count in profile:
+        if full == full_bad and sliced == slice_bad:
+            return count
+    return 0
+
+
+def slice_recursion_score(summary):
+    """Return (overlap, extra_full_bad, slice_only_bad) across both sides."""
+    overlap = full_vs_slice_count(summary.full_vs_slice_side0, 1, 1) + full_vs_slice_count(
+        summary.full_vs_slice_side1, 1, 1
+    )
+    extra_full_bad = full_vs_slice_count(summary.full_vs_slice_side0, 1, 0) + full_vs_slice_count(
+        summary.full_vs_slice_side1, 1, 0
+    )
+    slice_only_bad = full_vs_slice_count(summary.full_vs_slice_side0, 0, 1) + full_vs_slice_count(
+        summary.full_vs_slice_side1, 0, 1
+    )
+    return overlap, extra_full_bad, slice_only_bad
+
+
 def antipodal_pair_patterns_for_split(coloring, m, dimension):
     small_vertices, _ = build_hypercube_graph(m - 1)
     full_bad = set(bad_vertices(coloring, m))
@@ -567,10 +588,12 @@ def format_full_vs_slice(profile):
 
 def format_slice_summary(summary):
     patterns = ", ".join(f"{pattern}:{count}" for pattern, count in summary.antipodal_pair_patterns)
+    overlap, extra_full_bad, slice_only_bad = slice_recursion_score(summary)
     return (
         f"dimension={summary.dimension}; "
         f"full_bad=({summary.full_bad_side0},{summary.full_bad_side1}); "
         f"slice_bad=({summary.slice_bad_side0},{summary.slice_bad_side1}); "
+        f"recursion_score=(overlap={overlap}, extra_full={extra_full_bad}, slice_only={slice_only_bad}); "
         f"connectors red/blue=({summary.connector_red},{summary.connector_blue}); "
         f"identical_slices={summary.identical_slices}; "
         f"uniform_connectors={summary.uniform_connectors}; "
@@ -1067,10 +1090,10 @@ def solve_fixed_slice_negation(args):
             print(format_labeling(labels))
             print("Coloring:")
             print(summarize_coloring(coloring))
-            if args.show_components:
-                print(format_coloring_structure(coloring, args.m))
-            if args.show_slices:
-                print(format_slice_analysis(coloring, args.m))
+        if args.show_components:
+            print(format_coloring_structure(coloring, args.m))
+        if args.show_slices:
+            print(format_slice_analysis(coloring, args.m))
 
     solver.delete()
 
@@ -1114,10 +1137,10 @@ def solve_bad_count_bound(args):
         print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
         if args.show_examples:
             print(summarize_coloring(coloring))
-            if args.show_components:
-                print(format_coloring_structure(coloring, args.m))
-            if args.show_slices:
-                print(format_slice_analysis(coloring, args.m))
+        if args.show_components:
+            print(format_coloring_structure(coloring, args.m))
+        if args.show_slices:
+            print(format_slice_analysis(coloring, args.m))
 
     solver.delete()
 
@@ -1175,10 +1198,10 @@ def solve_pair_hit_bound(args):
         print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
         if args.show_examples:
             print(summarize_coloring(coloring))
-            if args.show_components:
-                print(format_coloring_structure(coloring, args.m))
-            if args.show_slices:
-                print(format_slice_analysis(coloring, args.m))
+        if args.show_components:
+            print(format_coloring_structure(coloring, args.m))
+        if args.show_slices:
+            print(format_slice_analysis(coloring, args.m))
 
     solver.delete()
 
@@ -1249,10 +1272,10 @@ def local_search_bad(args):
     print(f"Bicross witness: {format_bicross_witness(bicross_witness(best_coloring, args.m))}")
     if args.show_examples:
         print(summarize_coloring(best_coloring))
-        if args.show_components:
-            print(format_coloring_structure(best_coloring, args.m))
-        if args.show_slices:
-            print(format_slice_analysis(best_coloring, args.m))
+    if args.show_components:
+        print(format_coloring_structure(best_coloring, args.m))
+    if args.show_slices:
+        print(format_slice_analysis(best_coloring, args.m))
 
 
 def parse_args():
@@ -1314,7 +1337,7 @@ def parse_args():
         action="store_true",
         help="In pair-hit SAT mode, use color-swap symmetry to bound red degree at 00...0",
     )
-    parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model")
+    parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model edge list")
     parser.add_argument("--show-components", action="store_true", help="Print red/blue components for shown examples")
     parser.add_argument("--show-slices", action="store_true", help="Print coordinate-slice bad-set summaries")
     parser.add_argument("--show-paths", action="store_true", help="Show reconstructed fixed-slice paths in SAT mode")

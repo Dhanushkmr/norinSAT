@@ -15,6 +15,7 @@ from bicross_probe import (
     iter_antipodal_labelings,
     monotone_geodesic_vertices,
     random_edge_coloring,
+    slice_recursion_score,
     slice_summaries,
     validate_bad_labeling,
 )
@@ -79,6 +80,7 @@ class BicrossProbeTests(unittest.TestCase):
             self.assertEqual(summary.full_bad_side1, 0)
             self.assertEqual(summary.slice_bad_side0, 0)
             self.assertEqual(summary.slice_bad_side1, 0)
+            self.assertEqual(slice_recursion_score(summary), (0, 0, 0))
             self.assertTrue(summary.identical_slices)
             self.assertTrue(summary.uniform_connectors)
 

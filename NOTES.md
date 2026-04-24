@@ -417,6 +417,13 @@ Counting route:
   The full 32-pair obstruction is UNSAT with the zero-vertex symmetry breaks,
   so every `Q_6` coloring has at least one bicross pair.  Searches for 29, 30,
   and 31 pair hits did not finish quickly.
+- A 90-second-per-solver sweep for `Q_6` at 29 hit pairs with `cadical195`,
+  `glucose4`, `maplechrono`, and `kissat404` also timed out.  The frontier is
+  real enough that stronger cardinality claims need better structure, not just
+  a different default solver.
+- The direct `Q_7` full-obstruction CNF has 33,420 variables and 246,175
+  clauses with the zero-vertex symmetry breaks.  A 180-second `cadical195` run
+  timed out, so this is now a benchmark, not a result.
 - Local search in `Q_5` rediscovers 12- and 14-bad colorings, but short runs
   still leave multiple antipodal pairs with both endpoints in `G`.
 - The fixed-slice negation is exactly the assertion that `Bad` hits every
@@ -438,6 +445,15 @@ Slice-recursion route:
 - In the 14-bad `Q_5` SAT model, some coordinate splits have both sides equal
   to 7-bad `Q_4` slices, with full bad exactly matching slice bad.  This is a
   strong hint that a slice induction may be possible.
+- Added a recursion score for each split:
+  `(overlap, extra_full, slice_only)`.
+  Perfect inheritance is `extra_full = slice_only = 0`.
+- The 14-bad `Q_5` model has three perfect-inheritance splits with score
+  `(14, 0, 0)`.
+- A 28-pair-hit `Q_6` model has no perfect split, but still has
+  `slice_only = 0` in every coordinate.  A random `Q_3` check finds
+  `slice_only > 0`, so this is not a general monotonicity theorem; it may be a
+  near-obstruction signature.
 
 One-switch geodesic route:
 
