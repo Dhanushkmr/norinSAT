@@ -416,6 +416,9 @@ Counting route:
 - The fixed-slice negation is exactly the assertion that `Bad` hits every
   antipodal pair.  The counting lemma `|Bad| < 2^{m-1}` is a stronger
   sufficient condition.
+- Doubling a 7-bad `Q_4` coloring with a constant new-coordinate color gives a
+  14-bad `Q_5` coloring, so extremal-looking examples can lift by dimension
+  doubling.  This gives `max_bad(Q_{m+1}) >= 2 * max_bad(Q_m)`.
 
 One-switch geodesic route:
 
@@ -424,3 +427,13 @@ One-switch geodesic route:
 - Exact `Q_3`: this characterizes `G`.
 - Random `Q_4`: some good vertices require non-geodesic component paths, so the
   geodesic statement is only a sufficient condition in higher dimension.
+
+Two-layer reachability route:
+
+- `x in G` iff `(x, red phase)` reaches `(anti(x), blue phase)` in the directed
+  automaton with red edges in the lower layer, blue edges in the upper layer,
+  and directed switch edges from lower to upper at every vertex.
+- A fixed-slice obstruction would require antipodally consistent directed cuts
+  separating selected sources from their antipodal targets.
+- This reframes the remaining proof as a directed separation theorem on the
+  cube.

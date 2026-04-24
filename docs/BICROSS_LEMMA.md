@@ -124,6 +124,41 @@ inside one row of the matrix; blue edges move inside one column.  The hard part
 is to use the fact that the occupied cells and row/column moves come from the
 `m`-cube, not from an arbitrary bipartite incidence graph.
 
+## Two-Layer Reachability View
+
+A vertex `x` is in `G` exactly when there is a path from `x` to `anti(x)` that
+uses red edges first and then blue edges.  The path may switch colors zero or
+one time, and it does not need to be geodesic.
+
+Encode this with a directed two-layer graph:
+
+- the lower layer is the red phase;
+- the upper layer is the blue phase;
+- red cube edges are traversable in the lower layer;
+- blue cube edges are traversable in the upper layer;
+- at every vertex there is a directed switch edge from the lower layer to the
+  upper layer.
+
+Then
+
+```text
+x in G
+<=> (x, red phase) reaches (anti(x), blue phase).
+```
+
+The fixed-slice negation says that there is an antipodal choice of one endpoint
+from each pair whose selected two-layer reachability fails.  This makes the
+problem look like a directed separation theorem:
+
+```text
+for every selected x, a directed cut separates (x, red phase)
+from (anti(x), blue phase)
+```
+
+The hoped-for contradiction is that these antipodal directed cuts cannot be
+chosen consistently in a cube.  This is another possible bridge to Menger,
+Tucker, or Hex-type arguments.
+
 ## Contradiction Target
 
 Assume the bicross lemma is false.  Then for every antipodal pair, at least one
@@ -271,6 +306,10 @@ Current evidence:
   exact optimum is not known.
 - Local search in `Q_5` repeatedly finds 12- and 14-bad colorings, but still
   leaves several antipodal pairs with both endpoints in `G`.
+- Doubling a 7-bad `Q_4` coloring into two identical slices of `Q_5`, with all
+  new-coordinate edges given one fixed color, produces a 14-bad `Q_5` coloring.
+  More generally, this construction gives lower bounds
+  `max_bad(Q_{m+1}) >= 2 * max_bad(Q_m)`.
 
 This route may be easier than Tucker directly: prove that the bad set
 
