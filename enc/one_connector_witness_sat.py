@@ -14,12 +14,11 @@ script encodes the negation: an antipodal coloring with no such witness.
 import argparse
 import itertools
 
-from pysat.solvers import Solver
-
 from component_chain_classifier import classify_coloring, format_witness
 from encoding_context import anti, build_encoding_context, build_hypercube_graph, flip_i, swap
 from induction_probe import edge_key, monochromatic_antipodal_path
 from lex import lex_smaller_eq
+from sat_utils import make_pysat_solver, solver_help
 
 
 def log(message):
@@ -208,7 +207,8 @@ def solve(args):
         log(f"Wrote CNF to {args.tmp_file}")
         return
 
-    solver = Solver(name=args.solver) if args.solver else Solver()
+    solver, solver_name = make_pysat_solver(args.solver)
+    log(f"Solver: {solver_name}")
     for clause in ctx.enc:
         solver.add_clause(clause)
 
@@ -229,7 +229,7 @@ def solve(args):
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-n", type=int, required=True, help="Hypercube dimension")
-    parser.add_argument("--solver", default=None, help="Optional PySAT solver name")
+    parser.add_argument("--solver", default=None, help=solver_help())
     parser.add_argument("--no-solve", action="store_true", help="Only write the CNF")
     parser.add_argument("--tmp-file", default="one_connector_witness.cnf", help="CNF path for --no-solve")
     parser.add_argument("--partial-sym-break", type=int, default=0, help="Max comparisons for partial symmetry breaking")

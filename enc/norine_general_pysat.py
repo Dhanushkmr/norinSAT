@@ -10,7 +10,6 @@ import random
 from lex import lex_smaller_eq, checkLexMin
 
 from pysat.card import CardEnc
-from pysat.solvers import Solver
 
 from conjecture_encodings import (
     encode_conjecture1,
@@ -20,6 +19,7 @@ from conjecture_encodings import (
 )
 from encoding_context import build_encoding_context, flip_i, swap
 from f_encoding import encode_f_family
+from sat_utils import make_pysat_solver, solver_help
 
 
 DEFAULT_CARDINALITY_ENCODING = 7  # selected pysat encoding for cardinality constraints
@@ -266,6 +266,7 @@ if __name__ == "__main__":
 
     argparser.add_argument("--maximum-degree", type=int, help="Ensure that the first vertex has at most the given degree")
     argparser.add_argument("--first-vertex-min-degree", action="store_true", help="Ensure that the first vertex has the lowest red degree")
+    argparser.add_argument("--solver", default=None, help=solver_help())
 
     args = argparser.parse_args()
 
@@ -319,7 +320,8 @@ if __name__ == "__main__":
         os.remove(tmp_file)
 
     else:
-        solver = Solver()
+        solver, solver_name = make_pysat_solver(args.solver)
+        print(f"Solver: {solver_name}")
         for clause in encoding:
             solver.add_clause(clause)
         r = True

@@ -18,6 +18,18 @@ SAT-backed scripts need `python-sat`.  The recommended invocation is:
 uv run --python 3.12 --with python-sat python <script> ...
 ```
 
+For hard SAT runs, prefer the parallel portfolio runner so all cores are used:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/sat_portfolio.py \
+  --timeout 600 \
+  -- python enc/bicross_probe.py -m 7 --sat-pairs-hit-at-least 64 --sort-zero-edges --zero-red-degree-at-most-half
+```
+
+The PySAT-backed scripts automatically choose the fastest preferred available
+solver when `--solver` is omitted.  See `docs/DEV_SETUP.md` for solver lists,
+Make targets, and external DIMACS portfolio examples.
+
 The system Python on this machine is newer than the Python version used for the
 PySAT runs, so the `uv --python 3.12` form is the stable path.
 
@@ -268,6 +280,11 @@ Q_7, pair-hit lower bound 64 with symmetry breaks: writes a 33,420-variable, 246
 did not finish quickly.  A later 90-second-per-solver sweep for 29 hit pairs
 also timed out for `cadical195`, `glucose4`, `maplechrono`, and `kissat404`.
 A 180-second `cadical195` run on the `Q_7` 64-hit formula also timed out.
+The recommended next run is the all-core portfolio version:
+
+```bash
+make bicross-q7-portfolio
+```
 
 Slice-recursion diagnostics for a `Q_5` near-extremal:
 

@@ -22,6 +22,7 @@ from collections import Counter, deque
 from dataclasses import dataclass
 
 from induction_probe import all_edges, anti, build_hypercube_graph, color_components, edge_key, summarize_coloring
+from sat_utils import best_pysat_solver_name, make_pysat_solver, solver_help
 
 
 BLUE = False
@@ -816,7 +817,6 @@ def encode_fixed_slice_negation(
 ):
     try:
         from pysat.formula import IDPool
-        from pysat.solvers import Solver
     except ModuleNotFoundError as exc:
         raise SystemExit(f"python-sat is required for --sat-fixed-slice: {exc}") from exc
 
@@ -879,7 +879,7 @@ def encode_fixed_slice_negation(
         sort_zero_edges=sort_zero_edges,
     )
 
-    solver = Solver(name=solver_name) if solver_name else Solver()
+    solver, _ = make_pysat_solver(solver_name)
     for clause in clauses:
         solver.add_clause(clause)
 
@@ -890,7 +890,6 @@ def encode_bad_count_bound(m, bad_bound, solver_name=None):
     try:
         from pysat.card import CardEnc, EncType
         from pysat.formula import IDPool
-        from pysat.solvers import Solver
     except ModuleNotFoundError as exc:
         raise SystemExit(f"python-sat is required for --sat-bad-at-least: {exc}") from exc
 
@@ -939,7 +938,7 @@ def encode_bad_count_bound(m, bad_bound, solver_name=None):
     )
     clauses.extend(cardinality.clauses)
 
-    solver = Solver(name=solver_name) if solver_name else Solver()
+    solver, _ = make_pysat_solver(solver_name)
     for clause in clauses:
         solver.add_clause(clause)
 
@@ -986,7 +985,6 @@ def encode_pair_hit_bound(
     try:
         from pysat.card import CardEnc, EncType
         from pysat.formula import IDPool
-        from pysat.solvers import Solver
     except ModuleNotFoundError as exc:
         raise SystemExit(f"python-sat is required for --sat-pairs-hit-at-least: {exc}") from exc
 
@@ -1052,7 +1050,7 @@ def encode_pair_hit_bound(
         zero_red_degree_at_most_half=zero_red_degree_at_most_half,
     )
 
-    solver = Solver(name=solver_name) if solver_name else Solver()
+    solver, _ = make_pysat_solver(solver_name)
     for clause in clauses:
         solver.add_clause(clause)
 
@@ -1083,6 +1081,7 @@ def solve_fixed_slice_negation(args):
     print(f"Edge variables: {len(edges)}", flush=True)
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
+    print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
     if args.fix_zero_label:
         print("Symmetry: h(00...0)=red", flush=True)
     if args.sort_zero_edges:
@@ -1132,6 +1131,7 @@ def solve_bad_count_bound(args):
     print(f"Bad-vertex lower bound: {args.sat_bad_at_least}", flush=True)
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
+    print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
 
     if args.no_solve:
         write_dimacs(args.tmp_file, vpool.top, clauses)
@@ -1187,6 +1187,7 @@ def solve_pair_hit_bound(args):
     print(f"Antipodal pairs: {len(representatives)}", flush=True)
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
+    print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
     if args.sort_zero_edges:
         print("Symmetry: incident colors at 00...0 sorted", flush=True)
     if args.zero_red_degree_at_most_half:
@@ -1344,7 +1345,7 @@ def parse_args():
     )
     parser.add_argument("--temperature", type=float, default=25.0, help="Initial local-search temperature")
     parser.add_argument("--cooling", type=float, default=0.9995, help="Local-search cooling multiplier")
-    parser.add_argument("--solver", default=None, help="Optional PySAT solver name for --sat-fixed-slice")
+    parser.add_argument("--solver", default=None, help=solver_help())
     parser.add_argument("--no-solve", action="store_true", help="Write SAT-mode CNF and exit without solving")
     parser.add_argument("--tmp-file", default="bicross_probe.cnf", help="CNF path for --no-solve")
     parser.add_argument(

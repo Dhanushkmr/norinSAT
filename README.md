@@ -11,6 +11,15 @@ sh build-and-install.sh
 cd ..
 ```
 
+For the Python/PySAT workflow, use `uv`:
+
+```bash
+uv run --python 3.12 --with python-sat python <script> ...
+```
+
+Developer shortcuts and parallel SAT portfolio commands are documented in
+`docs/DEV_SETUP.md`.
+
 # Commands for Reproducing Results
 
 We use the Python 3 script `enc/norine_general_pysat.py` to create SAT encodings.  

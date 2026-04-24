@@ -474,6 +474,22 @@ Isomorphism note:
   isomorphism reduction is useful computationally, but the proof should not
   expect a single canonical extremal shape even in dimension 3.
 
+Dev/SAT setup note:
+
+- Added `enc/sat_utils.py` so PySAT-backed scripts default to the fastest
+  preferred available solver instead of PySAT's generic default.  In the local
+  `uv --with python-sat` environment this selects `cadical195`.
+- Added `enc/sat_portfolio.py`, a parallel portfolio runner.  It launches the
+  preferred solver backends concurrently, defaults to all available cores, and
+  stops after the first decisive SAT/UNSAT result unless `--keep-going` is set.
+- Added a `Makefile` with `make test`, `make test-sat`, `make test-all`,
+  `make list-solvers`, `make bicross-q6-frontier`, and
+  `make bicross-q7-portfolio`.
+- Local solver discovery currently finds:
+  `cadical195`, `kissat404`, `cadical153`, `cadical103`, `glucose4`,
+  `glucose42`, `maplechrono`, `gluecard4`, `gluecard3`, `maplesat`,
+  `maplecm`, `mergesat3`, `minicard`, `minisat22`, `lingeling`.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and

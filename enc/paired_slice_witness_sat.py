@@ -11,11 +11,10 @@ This script asks whether an antipodal coloring exists with no such witness.
 
 import argparse
 
-from pysat.solvers import Solver
-
 from component_chain_classifier import classify_coloring, format_witness
 from encoding_context import anti, antipodal_representatives, build_encoding_context, build_hypercube_graph
 from induction_probe import edge_key, monochromatic_antipodal_path, paired_slice_lift_witness
+from sat_utils import make_pysat_solver, solver_help
 
 
 def insert_coordinate(v, dimension, side):
@@ -110,7 +109,8 @@ def solve(args):
         print(f"Wrote CNF to {args.tmp_file}")
         return
 
-    solver = Solver(name=args.solver) if args.solver else Solver()
+    solver, solver_name = make_pysat_solver(args.solver)
+    print(f"Solver: {solver_name}")
     for clause in ctx.enc:
         solver.add_clause(clause)
 
@@ -140,7 +140,7 @@ def solve(args):
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-n", type=int, required=True, help="Hypercube dimension")
-    parser.add_argument("--solver", default=None, help="Optional PySAT solver name")
+    parser.add_argument("--solver", default=None, help=solver_help())
     parser.add_argument("--no-solve", action="store_true", help="Only write the CNF")
     parser.add_argument("--tmp-file", default="paired_slice_witness.cnf", help="CNF path for --no-solve")
     parser.add_argument("--print-model-edges", action="store_true", help="Print red edges when SAT")
