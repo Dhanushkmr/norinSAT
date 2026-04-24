@@ -542,7 +542,31 @@ def analyze_colorings(args):
             print(format_coloring_structure(first_good_with_no_monotone, args.m))
 
 
-def encode_fixed_slice_negation(m, solver_name=None):
+def zero_vertex(m):
+    return (0,) * m
+
+
+def unit_vertex(m, dimension):
+    return tuple(1 if i == dimension else 0 for i in range(m))
+
+
+def add_fixed_slice_symmetry_breaking(clauses, m, r, h, fix_zero_label=False, sort_zero_edges=False):
+    if fix_zero_label:
+        clauses.append([h(zero_vertex(m))])
+
+    if sort_zero_edges:
+        zero = zero_vertex(m)
+        incident = [r(zero, unit_vertex(m, dimension)) for dimension in range(m)]
+        for left, right in zip(incident, incident[1:]):
+            clauses.append([-left, right])
+
+
+def encode_fixed_slice_negation(
+    m,
+    solver_name=None,
+    fix_zero_label=False,
+    sort_zero_edges=False,
+):
     try:
         from pysat.formula import IDPool
         from pysat.solvers import Solver
@@ -598,6 +622,15 @@ def encode_fixed_slice_negation(m, solver_name=None):
                     -reachable(RED, antipode, intersection),
                 ]
             )
+
+    add_fixed_slice_symmetry_breaking(
+        clauses,
+        m,
+        r,
+        h,
+        fix_zero_label=fix_zero_label,
+        sort_zero_edges=sort_zero_edges,
+    )
 
     solver = Solver(name=solver_name) if solver_name else Solver()
     for clause in clauses:
@@ -671,16 +704,25 @@ def literal_is_true(model_set, lit):
 
 
 def solve_fixed_slice_negation(args):
-    solver, vpool, r, h, clauses = encode_fixed_slice_negation(args.m, args.solver)
+    solver, vpool, r, h, clauses = encode_fixed_slice_negation(
+        args.m,
+        args.solver,
+        fix_zero_label=args.fix_zero_label,
+        sort_zero_edges=args.sort_zero_edges,
+    )
     vertices, _, edges = all_edges(args.m)
 
-    print(f"Dimension: Q_{args.m}")
-    print(f"Edge variables: {len(edges)}")
-    print(f"Top variable: {vpool.top}")
-    print(f"Clauses: {len(clauses)}")
+    print(f"Dimension: Q_{args.m}", flush=True)
+    print(f"Edge variables: {len(edges)}", flush=True)
+    print(f"Top variable: {vpool.top}", flush=True)
+    print(f"Clauses: {len(clauses)}", flush=True)
+    if args.fix_zero_label:
+        print("Symmetry: h(00...0)=red", flush=True)
+    if args.sort_zero_edges:
+        print("Symmetry: incident colors at 00...0 sorted", flush=True)
 
     result = solver.solve()
-    print(f"SAT: {result}")
+    print(f"SAT: {result}", flush=True)
 
     if result:
         model_set = set(solver.get_model())
@@ -710,14 +752,14 @@ def solve_bad_count_bound(args):
     solver, vpool, r, bad, clauses = encode_bad_count_bound(args.m, args.sat_bad_at_least, args.solver)
     vertices, _, edges = all_edges(args.m)
 
-    print(f"Dimension: Q_{args.m}")
-    print(f"Edge variables: {len(edges)}")
-    print(f"Bad-vertex lower bound: {args.sat_bad_at_least}")
-    print(f"Top variable: {vpool.top}")
-    print(f"Clauses: {len(clauses)}")
+    print(f"Dimension: Q_{args.m}", flush=True)
+    print(f"Edge variables: {len(edges)}", flush=True)
+    print(f"Bad-vertex lower bound: {args.sat_bad_at_least}", flush=True)
+    print(f"Top variable: {vpool.top}", flush=True)
+    print(f"Clauses: {len(clauses)}", flush=True)
 
     result = solver.solve()
-    print(f"SAT: {result}")
+    print(f"SAT: {result}", flush=True)
 
     if result:
         model_set = set(solver.get_model())
@@ -764,6 +806,16 @@ def parse_args():
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for --samples")
     parser.add_argument("--solver", default=None, help="Optional PySAT solver name for --sat-fixed-slice")
+    parser.add_argument(
+        "--fix-zero-label",
+        action="store_true",
+        help="In SAT fixed-slice mode, use color-swap symmetry to set h(00...0)=red",
+    )
+    parser.add_argument(
+        "--sort-zero-edges",
+        action="store_true",
+        help="In SAT fixed-slice mode, use coordinate symmetry to sort colors incident to 00...0",
+    )
     parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model")
     parser.add_argument("--show-components", action="store_true", help="Print red/blue components for shown examples")
     parser.add_argument("--show-paths", action="store_true", help="Show reconstructed fixed-slice paths in SAT mode")

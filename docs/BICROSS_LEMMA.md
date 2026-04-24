@@ -182,6 +182,10 @@ Current results:
   clauses.
 - SAT fixed-slice negation for `Q_5`: UNSAT, with 2,160 variables and 12,384
   clauses.
+- SAT fixed-slice negation for `Q_6`: UNSAT with `h(00...0)=red` and sorted
+  colors incident to `00...0`, with 8,448 variables and 57,542 clauses.
+- SAT fixed-slice negation for `Q_7`: attempted with the same light symmetry
+  breaking and stopped after a few minutes without a result.
 
 ## Related Literature
 

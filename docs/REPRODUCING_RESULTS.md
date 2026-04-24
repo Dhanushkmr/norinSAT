@@ -230,6 +230,7 @@ Fixed-slice negation SAT check:
 ```bash
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-fixed-slice --solver cadical195
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-fixed-slice --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 6 --sat-fixed-slice --solver cadical195 --fix-zero-label --sort-zero-edges
 ```
 
 Expected key lines for `m = 4`:
@@ -247,6 +248,19 @@ Top variable: 2160
 Clauses: 12384
 SAT: False
 ```
+
+Expected key lines for `m = 6`:
+
+```text
+Top variable: 8448
+Clauses: 57542
+Symmetry: h(00...0)=red
+Symmetry: incident colors at 00...0 sorted
+SAT: False
+```
+
+Dimension `m = 7` was attempted with the same light symmetry breaking and
+stopped after a few minutes without a result.
 
 Interpretation:
 
