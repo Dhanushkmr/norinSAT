@@ -466,6 +466,14 @@ Slice-recursion route:
   `slice_only > 0`, so this is not a general monotonicity theorem; it may be a
   near-obstruction signature.
 
+Isomorphism note:
+
+- I checked all 4,096 `Q_3` edge colorings up to signed coordinate
+  permutations and global color swap.  They collapse to 76 orbits.
+- The extremal `|G| = 6` colorings still occupy 8 distinct orbits.  So
+  isomorphism reduction is useful computationally, but the proof should not
+  expect a single canonical extremal shape even in dimension 3.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and

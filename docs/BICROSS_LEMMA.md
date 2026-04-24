@@ -451,6 +451,10 @@ Current observations:
   `slice_only = 0`.  Random `Q_3` samples already show `slice_only > 0`, so
   this is not ordinary monotonicity; it appears tied to near-obstruction
   structure.
+- Isomorphism does not collapse the extremal world to one example.  Exhaustive
+  `Q_3` classification under signed coordinate permutations and global color
+  swap gives 76 coloring orbits, and the extremal `|G| = 6` cases occupy 8
+  distinct orbits.
 - This suggests a possible induction theorem: if a full bad set comes close to
   hitting every antipodal pair, then some coordinate split should expose two
   lower-dimensional bad sets that also come close to hitting every pair.
