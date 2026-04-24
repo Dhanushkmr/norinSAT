@@ -242,6 +242,8 @@ Pair-hit SAT checks:
 
 ```bash
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-pairs-hit-at-least 8 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-pairs-hit-at-least 7 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-pairs-hit-at-least 6 --solver cadical195
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-pairs-hit-at-least 13 --solver cadical195
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-pairs-hit-at-least 12 --solver cadical195
 uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 6 --sat-pairs-hit-at-least 28 --solver cadical195
@@ -253,6 +255,8 @@ Expected behavior:
 
 ```text
 Q_4, pair-hit lower bound 8: SAT: False
+Q_4, pair-hit lower bound 7: SAT: False
+Q_4, pair-hit lower bound 6: SAT: True
 Q_5, pair-hit lower bound 13: SAT: False
 Q_5, pair-hit lower bound 12: SAT: True
 Q_6, pair-hit lower bound 28: SAT: True

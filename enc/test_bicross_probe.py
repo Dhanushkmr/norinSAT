@@ -143,6 +143,22 @@ class OptionalSatBicrossTests(unittest.TestCase):
         finally:
             solver.delete()
 
+    def test_pair_hit_frontier_for_q3_q4(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        for m, hit_bound in ((3, 3), (4, 7)):
+            solver, _, _, _, _, _ = encode_pair_hit_bound(m, hit_bound=hit_bound)
+            try:
+                self.assertFalse(
+                    solver.solve(),
+                    f"Q_{m} bad vertices should not hit {hit_bound} antipodal pairs",
+                )
+            finally:
+                solver.delete()
+
 
 if __name__ == "__main__":
     unittest.main()

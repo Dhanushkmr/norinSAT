@@ -357,6 +357,13 @@ Current evidence:
 
 - Exact `Q_2`: minimum `|G|` is 3.
 - Exact `Q_3`: minimum `|G|` is 6.
+- Pair-hit SAT frontiers:
+  `Q_2` max hit pairs = 1 of 2,
+  `Q_3` max hit pairs = 2 of 4,
+  `Q_4` max hit pairs = 6 of 8,
+  `Q_5` max hit pairs = 12 of 16.
+  The `Q_6` lower bound is at least 28 of 32, already above the pure doubling
+  lower bound of 24.
 - SAT for `Q_4`: there is no coloring with 8 bad vertices, but there is one
   with 7 bad vertices.  Thus the exact minimum `|G|` is 9.
 - SAT for `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is

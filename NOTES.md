@@ -407,6 +407,13 @@ Counting route:
 - It is enough to prove `|G| > 2^{m-1}`.
 - Exact `Q_2`: minimum `|G| = 3`.
 - Exact `Q_3`: minimum `|G| = 6`.
+- Pair-hit SAT frontiers:
+  `Q_2` max hit pairs = 1 of 2,
+  `Q_3` max hit pairs = 2 of 4,
+  `Q_4` max hit pairs = 6 of 8,
+  `Q_5` max hit pairs = 12 of 16.
+  The `Q_6` lower bound is at least 28 of 32, already above the pure doubling
+  lower bound of 24.
 - SAT `Q_4`: no coloring has 8 bad vertices, but a coloring with 7 bad
   vertices exists; therefore minimum `|G| = 9`.
 - SAT `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
