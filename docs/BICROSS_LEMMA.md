@@ -186,7 +186,8 @@ Current results:
   colors incident to `00...0`, with 8,448 variables and 57,542 clauses.
 - SAT fixed-slice negation for `Q_7`: attempted with the same light symmetry
   breaking and stopped without a result.  The reduced CNF has 33,344 variables
-  and 262,535 clauses.
+  and 262,535 clauses.  The probe can write this CNF with `--no-solve` for a
+  longer external solver run.
 
 ## Related Literature
 
@@ -268,6 +269,8 @@ Current evidence:
 - SAT for `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
   attainable.  The search for 15 bad vertices did not finish quickly, so the
   exact optimum is not known.
+- Local search in `Q_5` repeatedly finds 12- and 14-bad colorings, but still
+  leaves several antipodal pairs with both endpoints in `G`.
 
 This route may be easier than Tucker directly: prove that the bad set
 
@@ -276,6 +279,10 @@ Bad = {x : R(x) is disjoint from B(anti(x))}
 ```
 
 cannot contain one representative from every antipodal pair.
+
+Equivalently, the fixed-slice negation is the statement that `Bad` hits every
+antipodal pair.  The counting lemma `|Bad| < 2^{m-1}` is a stronger sufficient
+condition, not a necessary one.
 
 ## One-Switch Geodesic Route
 

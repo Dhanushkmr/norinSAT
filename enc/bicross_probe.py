@@ -151,6 +151,29 @@ def bad_vertices(coloring, m):
     return tuple(v for v in vertices if v not in good)
 
 
+def antipodal_pair_profile(coloring, m):
+    good = set(good_vertices(coloring, m))
+    vertices, _ = build_hypercube_graph(m)
+    profile = Counter()
+
+    for start in antipodal_vertex_representatives(vertices):
+        end = anti(start)
+        good_count = int(start in good) + int(end in good)
+        if good_count == 2:
+            profile["both_good"] += 1
+        elif good_count == 1:
+            profile["one_good"] += 1
+        else:
+            profile["both_bad"] += 1
+
+    return profile
+
+
+def bad_vertices_hit_every_antipodal_pair(coloring, m):
+    profile = antipodal_pair_profile(coloring, m)
+    return profile["both_good"] == 0
+
+
 def path_for_coordinate_order(start, order):
     current = start
     path = [current]
@@ -435,6 +458,7 @@ def analyze_colorings(args):
     witness_pair_histogram = Counter()
     good_count_histogram = Counter()
     monotone_count_histogram = Counter()
+    pair_profile_histogram = Counter()
     min_good_count = None
     min_monotone_count = None
     good_with_no_monotone_geodesic = 0
@@ -449,6 +473,14 @@ def analyze_colorings(args):
         good = set(good_vertices(coloring, args.m))
         good_count = len(good)
         good_count_histogram[good_count] += 1
+        pair_profile = antipodal_pair_profile(coloring, args.m)
+        pair_profile_histogram[
+            (
+                pair_profile["both_good"],
+                pair_profile["one_good"],
+                pair_profile["both_bad"],
+            )
+        ] += 1
         if min_good_count is None or good_count < min_good_count:
             min_good_count = good_count
             first_min_good = coloring
@@ -501,6 +533,10 @@ def analyze_colorings(args):
         print("Good-count histogram:")
         for count in sorted(good_count_histogram):
             print(f"  {count}: {good_count_histogram[count]}")
+        print("Antipodal pair profile histogram:")
+        for profile, count in sorted(pair_profile_histogram.items(), key=lambda item: (item[0], item[1]))[:12]:
+            both_good, one_good, both_bad = profile
+            print(f"  both_good={both_good}, one_good={one_good}, both_bad={both_bad}: {count}")
     if args.analyze_monotone:
         print(f"Minimum red-then-blue geodesic starts: {min_monotone_count}")
         print(f"Colorings with good vertices needing non-geodesic component paths: {good_with_no_monotone_geodesic}")
@@ -703,6 +739,13 @@ def literal_is_true(model_set, lit):
     return lit in model_set if lit > 0 else -lit not in model_set
 
 
+def write_dimacs(path, top_variable, clauses):
+    with open(path, "w") as f:
+        f.write(f"p cnf {top_variable} {len(clauses)}\n")
+        for clause in clauses:
+            f.write(" ".join(str(lit) for lit in clause) + " 0\n")
+
+
 def solve_fixed_slice_negation(args):
     solver, vpool, r, h, clauses = encode_fixed_slice_negation(
         args.m,
@@ -720,6 +763,12 @@ def solve_fixed_slice_negation(args):
         print("Symmetry: h(00...0)=red", flush=True)
     if args.sort_zero_edges:
         print("Symmetry: incident colors at 00...0 sorted", flush=True)
+
+    if args.no_solve:
+        write_dimacs(args.tmp_file, vpool.top, clauses)
+        print(f"Wrote CNF to {args.tmp_file}", flush=True)
+        solver.delete()
+        return
 
     result = solver.solve()
     print(f"SAT: {result}", flush=True)
@@ -758,6 +807,12 @@ def solve_bad_count_bound(args):
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
 
+    if args.no_solve:
+        write_dimacs(args.tmp_file, vpool.top, clauses)
+        print(f"Wrote CNF to {args.tmp_file}", flush=True)
+        solver.delete()
+        return
+
     result = solver.solve()
     print(f"SAT: {result}", flush=True)
 
@@ -765,10 +820,18 @@ def solve_bad_count_bound(args):
         model_set = set(solver.get_model())
         coloring = {edge: literal_is_true(model_set, r(*edge)) for edge in edges}
         actual_bad = bad_vertices(coloring, args.m)
+        pair_profile = antipodal_pair_profile(coloring, args.m)
         encoded_bad = tuple(v for v in vertices if literal_is_true(model_set, bad(v)))
         print(f"Encoded bad vertices: {len(encoded_bad)}")
         print(f"Actual bad vertices: {len(actual_bad)}")
         print(f"Actual good vertices: {len(vertices) - len(actual_bad)}")
+        print(
+            "Antipodal pair profile: "
+            f"both_good={pair_profile['both_good']}, "
+            f"one_good={pair_profile['one_good']}, "
+            f"both_bad={pair_profile['both_bad']}"
+        )
+        print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}")
         print("Actual bad vertex list: " + ", ".join(vertex_name(v) for v in actual_bad))
         print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
         if args.show_examples:
@@ -779,6 +842,76 @@ def solve_bad_count_bound(args):
     solver.delete()
 
 
+def local_search_score(coloring, m, objective):
+    actual_bad = bad_vertices(coloring, m)
+    profile = antipodal_pair_profile(coloring, m)
+    pairs_hit = profile["one_good"] + profile["both_bad"]
+    if objective == "pairs-hit":
+        return pairs_hit, len(actual_bad), profile["both_bad"]
+    return len(actual_bad), pairs_hit, profile["both_bad"]
+
+
+def local_search_score_value(score, m):
+    scale = 2 ** m
+    return score[0] * (scale + 1) * (scale + 1) + score[1] * (scale + 1) + score[2]
+
+
+def local_search_bad(args):
+    _, _, edges = all_edges(args.m)
+    rng = random.Random(args.seed)
+    best_coloring = None
+    best_score = None
+    accepted = 0
+
+    for restart in range(args.restarts):
+        coloring = random_edge_coloring(edges, rng)
+        score = local_search_score(coloring, args.m, args.local_search_objective)
+        temperature = max(0.001, args.temperature)
+
+        for step in range(args.local_search_bad):
+            edge = edges[rng.randrange(len(edges))]
+            coloring[edge] = not coloring[edge]
+            next_score = local_search_score(coloring, args.m, args.local_search_objective)
+            delta = local_search_score_value(next_score, args.m) - local_search_score_value(score, args.m)
+            accept = next_score >= score or rng.random() < pow(2.718281828, delta / temperature)
+            if accept:
+                score = next_score
+                accepted += 1
+            else:
+                coloring[edge] = not coloring[edge]
+
+            temperature *= args.cooling
+
+            if best_score is None or score > best_score:
+                best_score = score
+                best_coloring = dict(coloring)
+
+        print(f"restart={restart + 1}; current_score={score}; best_score={best_score}", flush=True)
+
+    actual_bad = bad_vertices(best_coloring, args.m)
+    profile = antipodal_pair_profile(best_coloring, args.m)
+    print(f"Dimension: Q_{args.m}")
+    print(f"Objective: {args.local_search_objective}")
+    print(f"Restarts: {args.restarts}")
+    print(f"Steps per restart: {args.local_search_bad}")
+    print(f"Accepted moves: {accepted}")
+    print(f"Best score: {best_score}")
+    print(f"Actual bad vertices: {len(actual_bad)}")
+    print(f"Actual good vertices: {2 ** args.m - len(actual_bad)}")
+    print(
+        "Antipodal pair profile: "
+        f"both_good={profile['both_good']}, "
+        f"one_good={profile['one_good']}, "
+        f"both_bad={profile['both_bad']}"
+    )
+    print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(best_coloring, args.m)}")
+    print(f"Bicross witness: {format_bicross_witness(bicross_witness(best_coloring, args.m))}")
+    if args.show_examples:
+        print(summarize_coloring(best_coloring))
+        if args.show_components:
+            print(format_coloring_structure(best_coloring, args.m))
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-m", type=int, required=True, help="Dimension of the ordinary cube Q_m")
@@ -787,6 +920,7 @@ def parse_args():
     mode.add_argument("--samples", type=int, default=0, help="Sample random edge-colorings")
     mode.add_argument("--sat-fixed-slice", action="store_true", help="SAT-encode the fixed-slice negation")
     mode.add_argument("--sat-bad-at-least", type=int, help="SAT-search for a coloring with at least K bad vertices")
+    mode.add_argument("--local-search-bad", type=int, help="Run N local-search edge flips for near-obstructions")
     parser.add_argument("--max-edges", type=int, default=24, help="Maximum edge variables to enumerate exactly")
     parser.add_argument(
         "--check-all-labelings",
@@ -805,7 +939,18 @@ def parse_args():
         help="Maximum antipodal vertex-label variables to enumerate exactly",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for --samples")
+    parser.add_argument("--restarts", type=int, default=10, help="Restarts for --local-search-bad")
+    parser.add_argument(
+        "--local-search-objective",
+        choices=("bad", "pairs-hit"),
+        default="bad",
+        help="Objective for --local-search-bad",
+    )
+    parser.add_argument("--temperature", type=float, default=25.0, help="Initial local-search temperature")
+    parser.add_argument("--cooling", type=float, default=0.9995, help="Local-search cooling multiplier")
     parser.add_argument("--solver", default=None, help="Optional PySAT solver name for --sat-fixed-slice")
+    parser.add_argument("--no-solve", action="store_true", help="Write SAT-mode CNF and exit without solving")
+    parser.add_argument("--tmp-file", default="bicross_probe.cnf", help="CNF path for --no-solve")
     parser.add_argument(
         "--fix-zero-label",
         action="store_true",
@@ -831,6 +976,8 @@ def main():
         solve_fixed_slice_negation(args)
     elif args.sat_bad_at_least is not None:
         solve_bad_count_bound(args)
+    elif args.local_search_bad is not None:
+        local_search_bad(args)
     else:
         analyze_colorings(args)
 

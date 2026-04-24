@@ -4,6 +4,8 @@ import unittest
 
 from bicross_probe import (
     arbitrary_coloring_from_bits,
+    antipodal_pair_profile,
+    bad_vertices_hit_every_antipodal_pair,
     bicross_witness,
     construct_bad_antipodal_labeling,
     good_vertices,
@@ -28,6 +30,8 @@ class BicrossProbeTests(unittest.TestCase):
             checked += 1
             self.assertIsNotNone(bicross_witness(coloring, 3))
             self.assertIsNone(construct_bad_antipodal_labeling(coloring, 3))
+            self.assertFalse(bad_vertices_hit_every_antipodal_pair(coloring, 3))
+            self.assertGreater(antipodal_pair_profile(coloring, 3)["both_good"], 0)
             good = set(good_vertices(coloring, 3))
             monotone = set(monotone_geodesic_vertices(coloring, 3))
             self.assertEqual(good, monotone)

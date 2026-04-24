@@ -397,7 +397,8 @@ Current probe results:
   variables and 57,542 clauses.
 - SAT fixed-slice negation for `Q_7`: attempted with the same symmetry breaking
   and stopped without a result.  The formula has 33,344 variables and 262,535
-  clauses.
+  clauses.  Use `enc/bicross_probe.py --no-solve` to export it for an external
+  solver.
 
 Counting route:
 
@@ -410,6 +411,11 @@ Counting route:
   vertices exists; therefore minimum `|G| = 9`.
 - SAT `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
   attainable.  The search for 15 bad vertices did not finish quickly.
+- Local search in `Q_5` rediscovers 12- and 14-bad colorings, but short runs
+  still leave multiple antipodal pairs with both endpoints in `G`.
+- The fixed-slice negation is exactly the assertion that `Bad` hits every
+  antipodal pair.  The counting lemma `|Bad| < 2^{m-1}` is a stronger
+  sufficient condition.
 
 One-switch geodesic route:
 

@@ -200,6 +200,19 @@ With bicross witness: 10000
 Without bicross witness: 0
 ```
 
+Local search for near-obstructions:
+
+```bash
+python3 enc/bicross_probe.py -m 5 --local-search-bad 5000 --restarts 20 --local-search-objective bad --seed 2026
+python3 enc/bicross_probe.py -m 5 --local-search-bad 5000 --restarts 20 --local-search-objective pairs-hit --seed 2026
+```
+
+Expected behavior:
+
+- The `bad` objective can rediscover 14-bad `Q_5` colorings.
+- The `pairs-hit` objective still leaves multiple `both_good` antipodal pairs
+  in the best short runs.
+
 Counting SAT checks for `Q_4`:
 
 ```bash
@@ -262,6 +275,18 @@ SAT: False
 Dimension `m = 7` was attempted with the same light symmetry breaking and
 stopped without a result.  The generated formula has 33,344 variables and
 262,535 clauses.
+
+To write the `m = 7` formula for an external solver:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 7 \
+  --sat-fixed-slice \
+  --fix-zero-label \
+  --sort-zero-edges \
+  --no-solve \
+  --tmp-file bicross_fixed_slice_m7.cnf
+```
 
 Interpretation:
 
