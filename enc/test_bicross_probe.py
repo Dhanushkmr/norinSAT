@@ -1,0 +1,98 @@
+import itertools
+import random
+import unittest
+
+from bicross_probe import (
+    arbitrary_coloring_from_bits,
+    bicross_witness,
+    construct_bad_antipodal_labeling,
+    good_vertices,
+    encode_fixed_slice_negation,
+    fixed_slice_witness,
+    iter_antipodal_labelings,
+    monotone_geodesic_vertices,
+    random_edge_coloring,
+    validate_bad_labeling,
+)
+from induction_probe import all_edges
+
+
+class BicrossProbeTests(unittest.TestCase):
+    def test_exact_q3_all_edge_colorings_have_bicross_witness(self):
+        _, _, edges = all_edges(3)
+        checked = 0
+        min_good_count = 8
+
+        for bits in itertools.product((0, 1), repeat=len(edges)):
+            coloring = arbitrary_coloring_from_bits(edges, bits)
+            checked += 1
+            self.assertIsNotNone(bicross_witness(coloring, 3))
+            self.assertIsNone(construct_bad_antipodal_labeling(coloring, 3))
+            good = set(good_vertices(coloring, 3))
+            monotone = set(monotone_geodesic_vertices(coloring, 3))
+            self.assertEqual(good, monotone)
+            min_good_count = min(min_good_count, len(good))
+
+        self.assertEqual(checked, 4096)
+        self.assertEqual(min_good_count, 6)
+
+    def test_exact_q2_every_labeling_has_fixed_slice_witness(self):
+        _, _, edges = all_edges(2)
+        checked = 0
+
+        for bits in itertools.product((0, 1), repeat=len(edges)):
+            coloring = arbitrary_coloring_from_bits(edges, bits)
+            for labels in iter_antipodal_labelings(2, max_label_vars=8):
+                checked += 1
+                self.assertIsNotNone(fixed_slice_witness(coloring, 2, labels))
+
+        self.assertEqual(checked, 64)
+
+    def test_sampled_q4_edge_colorings_have_bicross_witness(self):
+        _, _, edges = all_edges(4)
+        rng = random.Random(20260424)
+
+        for _ in range(500):
+            coloring = random_edge_coloring(edges, rng)
+            self.assertIsNotNone(bicross_witness(coloring, 4))
+            self.assertIsNone(construct_bad_antipodal_labeling(coloring, 4))
+
+    def test_validate_bad_labeling_rejects_non_antipodal_labels(self):
+        _, _, edges = all_edges(2)
+        coloring = arbitrary_coloring_from_bits(edges, [0] * len(edges))
+        labels = {vertex: False for vertex in all_edges(2)[0]}
+
+        self.assertFalse(validate_bad_labeling(coloring, 2, labels))
+
+
+class OptionalSatBicrossTests(unittest.TestCase):
+    def test_fixed_slice_negation_unsat_for_q3_q4(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        for m in (3, 4):
+            solver, _, _, _, _ = encode_fixed_slice_negation(m)
+            try:
+                self.assertFalse(solver.solve(), f"Q_{m} fixed-slice negation should be UNSAT")
+            finally:
+                solver.delete()
+
+    def test_bad_count_bound_for_q4(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        from bicross_probe import encode_bad_count_bound
+
+        solver, _, _, _, _ = encode_bad_count_bound(4, bad_bound=8)
+        try:
+            self.assertFalse(solver.solve(), "Q_4 should not have 8 bad vertices")
+        finally:
+            solver.delete()
+
+
+if __name__ == "__main__":
+    unittest.main()

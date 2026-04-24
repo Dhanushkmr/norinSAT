@@ -154,3 +154,106 @@ Try to prove the one-connector lemma directly by contradiction:
 
 If that works, the proof no longer needs induction on reducible slices.  The
 dimension-reduction happens through components of a coordinate split.
+
+## Contradiction Attempt: Reduce To One Slice
+
+Fix a coordinate split `i`.  Write the `0`-slice as an ordinary cube
+`H = Q_{n-1}`.  For a projected vertex `a in H`, let `h(a)` be the color of the
+connector edge from `(0,a)` to `(1,a)`.
+
+The antipodal edge condition implies:
+
+- `h(anti(a)) = 1 - h(a)`;
+- complementing projected vertices sends a color-`c` path in the `0`-slice to a
+  color-`1-c` path in the `1`-slice.
+
+Therefore a one-connector witness using the connector at `a` exists exactly
+when
+
+```text
+C_{h(a)}(a) intersects C_{1-h(a)}(anti(a))
+```
+
+inside the `0`-slice, where `C_c(x)` means the color-`c` component of `x` in
+the `0`-slice.
+
+Indeed, if `x` is in this intersection, then:
+
+```text
+(0,x) --h(a) path--> (0,a)
+(0,a) --h(a) connector--> (1,a)
+(1,a) --h(a) path--> (1,anti(x))
+```
+
+The last in-slice path is obtained by complementing the color-`1-h(a)` path
+from `x` to `anti(a)` in the `0`-slice.  This gives a monochromatic path from
+`(0,x)` to its full antipode.
+
+So the one-connector lemma would follow from the following fixed-slice lemma.
+
+> Fixed-slice lemma.  In every red/blue edge-coloring of `Q_m`, and for every
+> antipodal vertex-labeling `h` with `h(anti(a)) = 1 - h(a)`, there is a vertex
+> `a` such that `C_{h(a)}(a)` intersects `C_{1-h(a)}(anti(a))`.
+
+This is stronger than the original one-connector statement because it would
+work for every coordinate split independently.
+
+## Equivalent Bicross Lemma
+
+The fixed-slice lemma is equivalent to an even cleaner edge-coloring statement.
+
+> Bicross lemma.  In every red/blue edge-coloring of `Q_m`, there is an
+> antipodal pair `x, anti(x)` such that both intersections are nonempty:
+>
+> ```text
+> C_red(x)  intersects C_blue(anti(x))
+> C_blue(x) intersects C_red(anti(x))
+> ```
+
+Why this is equivalent:
+
+- If such an antipodal pair exists, then either choice of `h(x)` gives the
+  fixed-slice witness.
+- Conversely, if no such pair exists, choose for each antipodal pair a color
+  whose corresponding intersection is empty.  This gives an antipodal labeling
+  `h` with no fixed-slice witness.
+
+This is now the cleanest proof target.  It no longer mentions SAT, connector
+quotients, or the full antipodal edge-coloring.  It only talks about red and
+blue components in an ordinary cube.
+
+## Contradiction Shape For The Bicross Lemma
+
+Assume the bicross lemma is false.  Then for every antipodal pair at least one
+of the two cross-intersections is empty.  Choose an antipodal label `h` selecting
+an empty cross-intersection for every pair.  Then the selected components
+
+```text
+S_x = C_{h(x)}(x)
+S_anti(x) = C_{h(anti(x))}(anti(x))
+```
+
+are disjoint for every `x`.
+
+A useful local fact:
+
+> If a red component `R` and a blue component `B` are disjoint, then there is no
+> cube edge directly between `R` and `B`.
+
+Reason: a red edge from `R` into `B` would put its `B` endpoint in `R`, and a
+blue edge from `R` into `B` would put its `R` endpoint in `B`.
+
+Thus every selected component is separated from its antipodal selected
+component by graph distance at least two.  The hoped-for contradiction is to
+turn these separations into an antipodal labeling of the cube's cells, then use
+a Tucker/Borsuk-Ulam style argument to force a complementary adjacency.  That
+complementary adjacency should translate back into exactly one of the forbidden
+cross-intersections.
+
+Current honest gap: the separation-to-Tucker-label step is not yet formal.
+The reduction above is solid; the remaining proof problem is a pure bicross
+component theorem for edge-colorings of `Q_m`.
+
+The standalone note `docs/BICROSS_LEMMA.md` tracks this reduced theorem.  The
+probe script `enc/bicross_probe.py` checks arbitrary cube edge-colorings,
+antipodal connector-labelings, and the SAT negation of the fixed-slice lemma.

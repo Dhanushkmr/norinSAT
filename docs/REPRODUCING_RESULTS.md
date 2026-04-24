@@ -150,6 +150,115 @@ Requiring longer component chains (>1 connector): 0
 These sampled runs are not proofs.  Their job is to make sure the phenomenon is
 not an artifact of the exact small dimensions.
 
+## Bicross Lemma Probe
+
+The bicross probe works on arbitrary red/blue edge-colorings of an ordinary
+cube `Q_m`, not antipodal edge-colorings of `Q_n`.
+
+Exact `Q_2`, including every antipodal vertex-labeling:
+
+```bash
+python3 enc/bicross_probe.py -m 2 --enumerate --check-all-labelings
+```
+
+Expected key lines:
+
+```text
+Edge colorings checked: 16
+With bicross witness: 16
+Without bicross witness: 0
+Fixed-slice labelings checked: 64
+```
+
+Exact `Q_3`, including every antipodal vertex-labeling:
+
+```bash
+python3 enc/bicross_probe.py -m 3 --enumerate --check-all-labelings
+```
+
+Expected key lines:
+
+```text
+Edge colorings checked: 4096
+With bicross witness: 4096
+Without bicross witness: 0
+Fixed-slice labelings checked: 65536
+```
+
+Random `Q_4`:
+
+```bash
+python3 enc/bicross_probe.py -m 4 --samples 10000
+python3 enc/bicross_probe.py -m 4 --samples 1000 --analyze-monotone
+```
+
+Expected key lines:
+
+```text
+Edge colorings checked: 10000
+With bicross witness: 10000
+Without bicross witness: 0
+```
+
+Counting SAT checks for `Q_4`:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-bad-at-least 8 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-bad-at-least 7 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-bad-at-least 14 --solver cadical195
+```
+
+Expected behavior:
+
+```text
+Bad-vertex lower bound: 8
+SAT: False
+
+Bad-vertex lower bound: 7
+SAT: True
+Actual bad vertices: 7
+Actual good vertices: 9
+
+Bad-vertex lower bound: 14
+SAT: True
+Actual bad vertices: 14
+Actual good vertices: 18
+```
+
+Fixed-slice negation SAT check:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-fixed-slice --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-fixed-slice --solver cadical195
+```
+
+Expected key lines for `m = 4`:
+
+```text
+Top variable: 560
+Clauses: 2608
+SAT: False
+```
+
+Expected key lines for `m = 5`:
+
+```text
+Top variable: 2160
+Clauses: 12384
+SAT: False
+```
+
+Interpretation:
+
+This is evidence for the reduced ordinary-cube theorem:
+
+```text
+bicross lemma for Q_{n-1}
+=> fixed-slice lemma
+=> one-connector lemma
+=> Norine
+```
+
 ## Paired-Slice Failure Models
 
 Generate a coloring with no paired-slice witness and immediately classify it:

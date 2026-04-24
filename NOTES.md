@@ -6,6 +6,8 @@
   and why the proof-search direction changed.
 - `docs/PROOF_DIRECTION.md`: current mathematical proof target and possible
   routes to a proof.
+- `docs/BICROSS_LEMMA.md`: reduced ordinary-cube component theorem behind the
+  one-connector lemma.
 - `docs/REPRODUCING_RESULTS.md`: commands and expected outputs for the current
   computational evidence.
 
@@ -310,3 +312,103 @@ Latest results:
 
 - Plain Python: 6 tests, OK, 2 optional SAT tests skipped.
 - PySAT via `uv`: 6 tests, OK.
+
+## April 24, 2026: Contradiction Proof Attempt
+
+The one-connector lemma can be reduced to a cleaner fixed-slice statement.
+
+Fix any coordinate split and write the `0`-slice as `H = Q_{n-1}`.  Let `h(a)`
+be the connector color at projected vertex `a`.  The full antipodal condition
+gives `h(anti(a)) = 1 - h(a)`, and complementing projected vertices swaps
+color-`c` paths in the `0`-slice with color-`1-c` paths in the `1`-slice.
+
+So a one-connector witness at connector `a` exists exactly when, inside the
+`0`-slice,
+
+```text
+C_{h(a)}(a) intersects C_{1-h(a)}(anti(a)).
+```
+
+This suggests the following fixed-slice lemma:
+
+> For every edge-coloring of `Q_m` and every antipodal vertex-labeling `h`,
+> `h(anti(a)) = 1 - h(a)`, some vertex `a` satisfies
+> `C_{h(a)}(a) intersect C_{1-h(a)}(anti(a)) != empty`.
+
+Equivalently, it is enough to prove the bicross lemma:
+
+> In every red/blue edge-coloring of `Q_m`, some antipodal pair `x, anti(x)`
+> satisfies both
+> `C_red(x) intersect C_blue(anti(x)) != empty` and
+> `C_blue(x) intersect C_red(anti(x)) != empty`.
+
+This is now the best contradiction target.  If it is false, choose for every
+antipodal pair whichever of the two intersections is empty.  This gives an
+antipodal labeling `h` whose selected component at `x` is disjoint from the
+selected component at `anti(x)` for every `x`.
+
+Useful local observation:
+
+- A disjoint red component and blue component cannot even be adjacent by a cube
+  edge.  A red edge would merge the endpoint into the red component; a blue edge
+  would merge the other endpoint into the blue component.
+
+Therefore a counterexample to the bicross lemma would create an antipodal
+family of component separations, all at graph distance at least two.  The likely
+next proof move is to convert those separations into a Tucker/Borsuk-Ulam style
+labeling and force a complementary adjacency, which should be the forbidden
+cross-intersection.
+
+Quick SAT sanity check for the fixed-slice negation:
+
+- `m=4`: UNSAT with 560 variables and 2,608 clauses.
+- `m=5`: UNSAT with 2,160 variables and 12,384 clauses.
+- `m=6`: launched with 8,448 variables and 57,536 clauses, then stopped after
+  it did not finish quickly.
+
+Interpretation: the reduction is not just cosmetically simpler.  It appears to
+isolate the real theorem: a pure component-crossing fact about arbitrary
+red/blue edge-colorings of the cube.
+
+Implemented probe: `enc/bicross_probe.py`
+
+Useful commands:
+
+```bash
+python3 enc/bicross_probe.py -m 3 --enumerate
+python3 enc/bicross_probe.py -m 3 --enumerate --check-all-labelings
+python3 enc/bicross_probe.py -m 4 --samples 10000
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-fixed-slice --solver cadical195
+```
+
+Current probe results:
+
+- Exact `Q_2`: all 16 ordinary edge-colorings satisfy bicross; all 64
+  coloring/antipodal-labeling pairs have a fixed-slice witness.
+- Exact `Q_3`: all 4,096 ordinary edge-colorings satisfy bicross; all 65,536
+  coloring/antipodal-labeling pairs have a fixed-slice witness.
+- Random `Q_4`: 10,000/10,000 sampled ordinary edge-colorings satisfy bicross.
+- SAT fixed-slice negation for `Q_4`: UNSAT with 560 variables and 2,608
+  clauses.
+- SAT fixed-slice negation for `Q_5`: UNSAT with 2,160 variables and 12,384
+  clauses.
+
+Counting route:
+
+- Define `G = {x : R(x) intersects B(anti(x))}`.
+- A bicross pair is exactly an antipodal pair contained in `G`.
+- It is enough to prove `|G| > 2^{m-1}`.
+- Exact `Q_2`: minimum `|G| = 3`.
+- Exact `Q_3`: minimum `|G| = 6`.
+- SAT `Q_4`: no coloring has 8 bad vertices, but a coloring with 7 bad
+  vertices exists; therefore minimum `|G| = 9`.
+- SAT `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
+  attainable.  The search for 15 bad vertices did not finish quickly.
+
+One-switch geodesic route:
+
+- If an antipodal geodesic from `x` to `anti(x)` has all red edges first and
+  then all blue edges, then `x in G`.
+- Exact `Q_3`: this characterizes `G`.
+- Random `Q_4`: some good vertices require non-geodesic component paths, so the
+  geodesic statement is only a sufficient condition in higher dimension.
