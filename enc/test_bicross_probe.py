@@ -5,9 +5,11 @@ import unittest
 from bicross_probe import (
     arbitrary_coloring_from_bits,
     antipodal_pair_profile,
+    bad_vertices,
     bad_vertices_hit_every_antipodal_pair,
     bicross_witness,
     construct_bad_antipodal_labeling,
+    doubled_coloring,
     good_vertices,
     encode_fixed_slice_negation,
     encode_pair_hit_bound,
@@ -83,6 +85,22 @@ class BicrossProbeTests(unittest.TestCase):
             self.assertEqual(slice_recursion_score(summary), (0, 0, 0))
             self.assertTrue(summary.identical_slices)
             self.assertTrue(summary.uniform_connectors)
+
+    def test_doubling_preserves_bad_vertices_by_copy(self):
+        _, _, edges = all_edges(2)
+        for bits in itertools.product((0, 1), repeat=len(edges)):
+            coloring = arbitrary_coloring_from_bits(edges, bits)
+            original_bad_count = len(bad_vertices(coloring, 2))
+            original_profile = antipodal_pair_profile(coloring, 2)
+
+            for connector_color in (False, True):
+                for dimension in range(3):
+                    doubled = doubled_coloring(coloring, 2, connector_color, dimension)
+                    doubled_profile = antipodal_pair_profile(doubled, 3)
+                    self.assertEqual(len(bad_vertices(doubled, 3)), 2 * original_bad_count)
+                    self.assertEqual(doubled_profile["both_good"], 2 * original_profile["both_good"])
+                    self.assertEqual(doubled_profile["one_good"], 2 * original_profile["one_good"])
+                    self.assertEqual(doubled_profile["both_bad"], 2 * original_profile["both_bad"])
 
 
 class OptionalSatBicrossTests(unittest.TestCase):

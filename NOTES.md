@@ -432,6 +432,10 @@ Counting route:
 - Doubling a 7-bad `Q_4` coloring with a constant new-coordinate color gives a
   14-bad `Q_5` coloring, so extremal-looking examples can lift by dimension
   doubling.  This gives `max_bad(Q_{m+1}) >= 2 * max_bad(Q_m)`.
+- Implemented this as `doubled_coloring` in `enc/bicross_probe.py` and tested
+  that it exactly doubles bad vertices and antipodal pair profiles for every
+  `Q_2` coloring, every inserted coordinate, and either uniform connector
+  color.
 
 Slice-recursion route:
 

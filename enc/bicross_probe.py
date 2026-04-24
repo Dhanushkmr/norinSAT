@@ -213,6 +213,31 @@ def slice_coloring(coloring, m, dimension, side):
     return sliced
 
 
+def doubled_coloring(coloring, m, connector_color=BLUE, dimension=None):
+    """Duplicate a Q_m coloring into two Q_m slices of Q_{m+1}.
+
+    The two slices are identical copies of the input coloring, and every edge in
+    the new coordinate direction has the same connector color.
+    """
+    if dimension is None:
+        dimension = m
+    if not 0 <= dimension <= m:
+        raise ValueError(f"dimension must be between 0 and {m}, got {dimension}")
+
+    _, _, edges = all_edges(m + 1)
+    doubled = {}
+    for u, v in edges:
+        if u[dimension] != v[dimension]:
+            doubled[edge_key(u, v)] = connector_color
+        else:
+            small_edge = edge_key(
+                remove_coordinate(u, dimension),
+                remove_coordinate(v, dimension),
+            )
+            doubled[edge_key(u, v)] = coloring[small_edge]
+    return doubled
+
+
 def slices_are_identical(coloring, m, dimension):
     vertices, graph = build_hypercube_graph(m)
     for u in vertices:

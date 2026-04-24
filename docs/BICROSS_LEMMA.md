@@ -380,6 +380,11 @@ Current evidence:
   new-coordinate edges given one fixed color, produces a 14-bad `Q_5` coloring.
   More generally, this construction gives lower bounds
   `max_bad(Q_{m+1}) >= 2 * max_bad(Q_m)`.
+- This construction is implemented as `doubled_coloring` and tested on all
+  `Q_2` colorings.  Its mechanism is simple: the uniform connector color lets
+  one color cross between copied slices while the other remains slice-local, so
+  the full good/bad status of each copied vertex is exactly its original
+  good/bad status.
 
 This route may be easier than Tucker directly: prove that the bad set
 
