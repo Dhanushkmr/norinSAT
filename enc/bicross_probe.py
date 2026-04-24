@@ -45,6 +45,22 @@ class FixedSliceWitness:
     opposite_color_path: tuple[tuple[int, ...], ...] | None = None
 
 
+@dataclass(frozen=True)
+class SliceSummary:
+    dimension: int
+    full_bad_side0: int
+    full_bad_side1: int
+    slice_bad_side0: int
+    slice_bad_side1: int
+    full_vs_slice_side0: tuple[tuple[int, int, int], ...]
+    full_vs_slice_side1: tuple[tuple[int, int, int], ...]
+    connector_red: int
+    connector_blue: int
+    identical_slices: bool
+    uniform_connectors: bool
+    antipodal_pair_patterns: tuple[tuple[str, int], ...]
+
+
 def color_name(color):
     return "red" if color else "blue"
 
@@ -65,6 +81,14 @@ def arbitrary_coloring_from_bits(edges, bits):
 
 def random_edge_coloring(edges, rng):
     return {edge: bool(rng.randrange(2)) for edge in edges}
+
+
+def insert_coordinate(v, dimension, side):
+    return v[:dimension] + (side,) + v[dimension:]
+
+
+def remove_coordinate(v, dimension):
+    return v[:dimension] + v[dimension + 1 :]
 
 
 def component_data(coloring, m):
@@ -172,6 +196,112 @@ def antipodal_pair_profile(coloring, m):
 def bad_vertices_hit_every_antipodal_pair(coloring, m):
     profile = antipodal_pair_profile(coloring, m)
     return profile["both_good"] == 0
+
+
+def slice_coloring(coloring, m, dimension, side):
+    vertices, graph = build_hypercube_graph(m)
+    sliced = {}
+    for u in vertices:
+        if u[dimension] != side:
+            continue
+        for v in graph[u]:
+            if v[dimension] != side or u >= v:
+                continue
+            sliced[edge_key(remove_coordinate(u, dimension), remove_coordinate(v, dimension))] = coloring[
+                edge_key(u, v)
+            ]
+    return sliced
+
+
+def slices_are_identical(coloring, m, dimension):
+    vertices, graph = build_hypercube_graph(m)
+    for u in vertices:
+        if u[dimension] != 0:
+            continue
+        for v in graph[u]:
+            if v[dimension] != 0 or u >= v:
+                continue
+            u1 = insert_coordinate(remove_coordinate(u, dimension), dimension, 1)
+            v1 = insert_coordinate(remove_coordinate(v, dimension), dimension, 1)
+            if coloring[edge_key(u, v)] != coloring[edge_key(u1, v1)]:
+                return False
+    return True
+
+
+def connector_color_counts(coloring, m, dimension):
+    vertices, _ = build_hypercube_graph(m)
+    counts = Counter()
+    for u in vertices:
+        if u[dimension] != 0:
+            continue
+        v = insert_coordinate(remove_coordinate(u, dimension), dimension, 1)
+        counts[coloring[edge_key(u, v)]] += 1
+    return counts
+
+
+def full_vs_slice_profile(universe, full_bad_projected, slice_bad_projected):
+    profile = Counter()
+    for vertex in universe:
+        profile[(int(vertex in full_bad_projected), int(vertex in slice_bad_projected))] += 1
+    return tuple((key[0], key[1], count) for key, count in sorted(profile.items()))
+
+
+def antipodal_pair_patterns_for_split(coloring, m, dimension):
+    small_vertices, _ = build_hypercube_graph(m - 1)
+    full_bad = set(bad_vertices(coloring, m))
+    patterns = Counter()
+
+    for small in antipodal_vertex_representatives(small_vertices):
+        small_anti = anti(small)
+        vertices = (
+            insert_coordinate(small, dimension, 0),
+            insert_coordinate(small, dimension, 1),
+            insert_coordinate(small_anti, dimension, 0),
+            insert_coordinate(small_anti, dimension, 1),
+        )
+        pattern = "".join("B" if vertex in full_bad else "G" for vertex in vertices)
+        patterns[pattern] += 1
+
+    return tuple(sorted(patterns.items()))
+
+
+def slice_summary(coloring, m, dimension):
+    if m < 2:
+        raise ValueError("Slice summaries require m >= 2.")
+
+    full_bad = set(bad_vertices(coloring, m))
+    side_bad = {}
+    slice_bad = {}
+    small_vertices, _ = build_hypercube_graph(m - 1)
+
+    for side in (0, 1):
+        side_bad[side] = {
+            remove_coordinate(vertex, dimension)
+            for vertex in full_bad
+            if vertex[dimension] == side
+        }
+        sliced = slice_coloring(coloring, m, dimension, side)
+        slice_bad[side] = set(bad_vertices(sliced, m - 1))
+
+    connector_counts = connector_color_counts(coloring, m, dimension)
+    return SliceSummary(
+        dimension=dimension,
+        full_bad_side0=len(side_bad[0]),
+        full_bad_side1=len(side_bad[1]),
+        slice_bad_side0=len(slice_bad[0]),
+        slice_bad_side1=len(slice_bad[1]),
+        full_vs_slice_side0=full_vs_slice_profile(small_vertices, side_bad[0], slice_bad[0]),
+        full_vs_slice_side1=full_vs_slice_profile(small_vertices, side_bad[1], slice_bad[1]),
+        connector_red=connector_counts[RED],
+        connector_blue=connector_counts[BLUE],
+        identical_slices=slices_are_identical(coloring, m, dimension),
+        uniform_connectors=connector_counts[RED] == 0 or connector_counts[BLUE] == 0,
+        antipodal_pair_patterns=antipodal_pair_patterns_for_split(coloring, m, dimension),
+    )
+
+
+def slice_summaries(coloring, m):
+    return tuple(slice_summary(coloring, m, dimension) for dimension in range(m))
 
 
 def path_for_coordinate_order(start, order):
@@ -429,6 +559,31 @@ def format_coloring_structure(coloring, m):
     return "\n".join(lines)
 
 
+def format_full_vs_slice(profile):
+    if not profile:
+        return "none"
+    return ", ".join(f"full_bad={full}, slice_bad={sliced}: {count}" for full, sliced, count in profile)
+
+
+def format_slice_summary(summary):
+    patterns = ", ".join(f"{pattern}:{count}" for pattern, count in summary.antipodal_pair_patterns)
+    return (
+        f"dimension={summary.dimension}; "
+        f"full_bad=({summary.full_bad_side0},{summary.full_bad_side1}); "
+        f"slice_bad=({summary.slice_bad_side0},{summary.slice_bad_side1}); "
+        f"connectors red/blue=({summary.connector_red},{summary.connector_blue}); "
+        f"identical_slices={summary.identical_slices}; "
+        f"uniform_connectors={summary.uniform_connectors}; "
+        f"side0 full-vs-slice=[{format_full_vs_slice(summary.full_vs_slice_side0)}]; "
+        f"side1 full-vs-slice=[{format_full_vs_slice(summary.full_vs_slice_side1)}]; "
+        f"pair_patterns=[{patterns}]"
+    )
+
+
+def format_slice_analysis(coloring, m):
+    return "\n".join(format_slice_summary(summary) for summary in slice_summaries(coloring, m))
+
+
 def coloring_source(args):
     _, _, edges = all_edges(args.m)
 
@@ -558,6 +713,8 @@ def analyze_colorings(args):
             print(summarize_coloring(coloring))
             if args.show_components:
                 print(format_coloring_structure(coloring, args.m))
+            if args.show_slices:
+                print(format_slice_analysis(coloring, args.m))
     if first_obstruction is not None:
         coloring, labels = first_obstruction
         print("  obstruction: found")
@@ -566,16 +723,22 @@ def analyze_colorings(args):
             print(summarize_coloring(coloring))
             if args.show_components:
                 print(format_coloring_structure(coloring, args.m))
+            if args.show_slices:
+                print(format_slice_analysis(coloring, args.m))
     if args.show_examples and first_min_good is not None:
         print("  minimum-good-count coloring:")
         print(summarize_coloring(first_min_good))
         if args.show_components:
             print(format_coloring_structure(first_min_good, args.m))
+        if args.show_slices:
+            print(format_slice_analysis(first_min_good, args.m))
     if args.show_examples and first_good_with_no_monotone is not None:
         print("  first coloring with non-geodesic good vertices:")
         print(summarize_coloring(first_good_with_no_monotone))
         if args.show_components:
             print(format_coloring_structure(first_good_with_no_monotone, args.m))
+        if args.show_slices:
+            print(format_slice_analysis(first_good_with_no_monotone, args.m))
 
 
 def zero_vertex(m):
@@ -735,6 +898,119 @@ def encode_bad_count_bound(m, bad_bound, solver_name=None):
     return solver, vpool, r, bad, clauses
 
 
+def add_pair_hit_symmetry_breaking(
+    clauses,
+    m,
+    r,
+    vpool,
+    sort_zero_edges=False,
+    zero_red_degree_at_most_half=False,
+):
+    zero = zero_vertex(m)
+    incident = [r(zero, unit_vertex(m, dimension)) for dimension in range(m)]
+
+    if sort_zero_edges:
+        for left, right in zip(incident, incident[1:]):
+            clauses.append([-left, right])
+
+    if zero_red_degree_at_most_half:
+        try:
+            from pysat.card import CardEnc, EncType
+        except ModuleNotFoundError as exc:
+            raise SystemExit(f"python-sat is required for --zero-red-degree-at-most-half: {exc}") from exc
+
+        cardinality = CardEnc.atmost(
+            lits=incident,
+            bound=m // 2,
+            vpool=vpool,
+            encoding=EncType.seqcounter,
+        )
+        clauses.extend(cardinality.clauses)
+
+
+def encode_pair_hit_bound(
+    m,
+    hit_bound,
+    solver_name=None,
+    sort_zero_edges=False,
+    zero_red_degree_at_most_half=False,
+):
+    try:
+        from pysat.card import CardEnc, EncType
+        from pysat.formula import IDPool
+        from pysat.solvers import Solver
+    except ModuleNotFoundError as exc:
+        raise SystemExit(f"python-sat is required for --sat-pairs-hit-at-least: {exc}") from exc
+
+    vertices, _, edges = all_edges(m)
+    representatives = list(antipodal_vertex_representatives(vertices))
+    vpool = IDPool()
+
+    def r(u, v):
+        return vpool.id(("r", edge_key(u, v)))
+
+    def reachable(target_color, root, v):
+        return vpool.id(("p", target_color, root, v))
+
+    def bad(v):
+        return vpool.id(("bad", v))
+
+    def pair_hit(v):
+        return vpool.id(("pair_hit", v))
+
+    clauses = []
+
+    for target_color in (BLUE, RED):
+        for root in vertices:
+            clauses.append([reachable(target_color, root, root)])
+            for u, v in edges:
+                edge_lit = r(u, v)
+                if target_color:
+                    clauses.append([-reachable(target_color, root, u), -edge_lit, reachable(target_color, root, v)])
+                    clauses.append([-reachable(target_color, root, v), -edge_lit, reachable(target_color, root, u)])
+                else:
+                    clauses.append([-reachable(target_color, root, u), edge_lit, reachable(target_color, root, v)])
+                    clauses.append([-reachable(target_color, root, v), edge_lit, reachable(target_color, root, u)])
+
+    for start in vertices:
+        end = anti(start)
+        for intersection in vertices:
+            clauses.append(
+                [
+                    -bad(start),
+                    -reachable(RED, start, intersection),
+                    -reachable(BLUE, end, intersection),
+                ]
+            )
+
+    for start in representatives:
+        end = anti(start)
+        clauses.append([-pair_hit(start), bad(start), bad(end)])
+
+    cardinality = CardEnc.atleast(
+        lits=[pair_hit(v) for v in representatives],
+        bound=hit_bound,
+        vpool=vpool,
+        encoding=EncType.seqcounter,
+    )
+    clauses.extend(cardinality.clauses)
+
+    add_pair_hit_symmetry_breaking(
+        clauses,
+        m,
+        r,
+        vpool,
+        sort_zero_edges=sort_zero_edges,
+        zero_red_degree_at_most_half=zero_red_degree_at_most_half,
+    )
+
+    solver = Solver(name=solver_name) if solver_name else Solver()
+    for clause in clauses:
+        solver.add_clause(clause)
+
+    return solver, vpool, r, bad, pair_hit, clauses
+
+
 def literal_is_true(model_set, lit):
     return lit in model_set if lit > 0 else -lit not in model_set
 
@@ -793,6 +1069,8 @@ def solve_fixed_slice_negation(args):
             print(summarize_coloring(coloring))
             if args.show_components:
                 print(format_coloring_structure(coloring, args.m))
+            if args.show_slices:
+                print(format_slice_analysis(coloring, args.m))
 
     solver.delete()
 
@@ -838,6 +1116,69 @@ def solve_bad_count_bound(args):
             print(summarize_coloring(coloring))
             if args.show_components:
                 print(format_coloring_structure(coloring, args.m))
+            if args.show_slices:
+                print(format_slice_analysis(coloring, args.m))
+
+    solver.delete()
+
+
+def solve_pair_hit_bound(args):
+    solver, vpool, r, bad, pair_hit, clauses = encode_pair_hit_bound(
+        args.m,
+        args.sat_pairs_hit_at_least,
+        args.solver,
+        sort_zero_edges=args.sort_zero_edges,
+        zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
+    )
+    vertices, _, edges = all_edges(args.m)
+    representatives = list(antipodal_vertex_representatives(vertices))
+
+    print(f"Dimension: Q_{args.m}", flush=True)
+    print(f"Edge variables: {len(edges)}", flush=True)
+    print(f"Pair-hit lower bound: {args.sat_pairs_hit_at_least}", flush=True)
+    print(f"Antipodal pairs: {len(representatives)}", flush=True)
+    print(f"Top variable: {vpool.top}", flush=True)
+    print(f"Clauses: {len(clauses)}", flush=True)
+    if args.sort_zero_edges:
+        print("Symmetry: incident colors at 00...0 sorted", flush=True)
+    if args.zero_red_degree_at_most_half:
+        print("Symmetry: red degree at 00...0 at most half", flush=True)
+
+    if args.no_solve:
+        write_dimacs(args.tmp_file, vpool.top, clauses)
+        print(f"Wrote CNF to {args.tmp_file}", flush=True)
+        solver.delete()
+        return
+
+    result = solver.solve()
+    print(f"SAT: {result}", flush=True)
+
+    if result:
+        model_set = set(solver.get_model())
+        coloring = {edge: literal_is_true(model_set, r(*edge)) for edge in edges}
+        actual_bad = bad_vertices(coloring, args.m)
+        pair_profile = antipodal_pair_profile(coloring, args.m)
+        encoded_bad = tuple(v for v in vertices if literal_is_true(model_set, bad(v)))
+        encoded_hits = tuple(v for v in representatives if literal_is_true(model_set, pair_hit(v)))
+        print(f"Encoded bad vertices: {len(encoded_bad)}")
+        print(f"Encoded hit pairs: {len(encoded_hits)}")
+        print(f"Actual bad vertices: {len(actual_bad)}")
+        print(f"Actual good vertices: {len(vertices) - len(actual_bad)}")
+        print(
+            "Antipodal pair profile: "
+            f"both_good={pair_profile['both_good']}, "
+            f"one_good={pair_profile['one_good']}, "
+            f"both_bad={pair_profile['both_bad']}"
+        )
+        print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}")
+        print("Actual bad vertex list: " + ", ".join(vertex_name(v) for v in actual_bad))
+        print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
+        if args.show_examples:
+            print(summarize_coloring(coloring))
+            if args.show_components:
+                print(format_coloring_structure(coloring, args.m))
+            if args.show_slices:
+                print(format_slice_analysis(coloring, args.m))
 
     solver.delete()
 
@@ -910,6 +1251,8 @@ def local_search_bad(args):
         print(summarize_coloring(best_coloring))
         if args.show_components:
             print(format_coloring_structure(best_coloring, args.m))
+        if args.show_slices:
+            print(format_slice_analysis(best_coloring, args.m))
 
 
 def parse_args():
@@ -920,6 +1263,11 @@ def parse_args():
     mode.add_argument("--samples", type=int, default=0, help="Sample random edge-colorings")
     mode.add_argument("--sat-fixed-slice", action="store_true", help="SAT-encode the fixed-slice negation")
     mode.add_argument("--sat-bad-at-least", type=int, help="SAT-search for a coloring with at least K bad vertices")
+    mode.add_argument(
+        "--sat-pairs-hit-at-least",
+        type=int,
+        help="SAT-search for a coloring whose bad vertices hit at least K antipodal pairs",
+    )
     mode.add_argument("--local-search-bad", type=int, help="Run N local-search edge flips for near-obstructions")
     parser.add_argument("--max-edges", type=int, default=24, help="Maximum edge variables to enumerate exactly")
     parser.add_argument(
@@ -959,10 +1307,16 @@ def parse_args():
     parser.add_argument(
         "--sort-zero-edges",
         action="store_true",
-        help="In SAT fixed-slice mode, use coordinate symmetry to sort colors incident to 00...0",
+        help="In SAT modes, use coordinate symmetry to sort colors incident to 00...0",
+    )
+    parser.add_argument(
+        "--zero-red-degree-at-most-half",
+        action="store_true",
+        help="In pair-hit SAT mode, use color-swap symmetry to bound red degree at 00...0",
     )
     parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model")
     parser.add_argument("--show-components", action="store_true", help="Print red/blue components for shown examples")
+    parser.add_argument("--show-slices", action="store_true", help="Print coordinate-slice bad-set summaries")
     parser.add_argument("--show-paths", action="store_true", help="Show reconstructed fixed-slice paths in SAT mode")
     return parser.parse_args()
 
@@ -976,6 +1330,8 @@ def main():
         solve_fixed_slice_negation(args)
     elif args.sat_bad_at_least is not None:
         solve_bad_count_bound(args)
+    elif args.sat_pairs_hit_at_least is not None:
+        solve_pair_hit_bound(args)
     elif args.local_search_bad is not None:
         local_search_bad(args)
     else:

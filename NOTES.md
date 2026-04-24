@@ -411,6 +411,12 @@ Counting route:
   vertices exists; therefore minimum `|G| = 9`.
 - SAT `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
   attainable.  The search for 15 bad vertices did not finish quickly.
+- Pair-hit SAT `Q_5`: bad vertices can hit 12 of the 16 antipodal pairs, but
+  cannot hit 13.  So every `Q_5` coloring has at least four bicross pairs.
+- Pair-hit SAT `Q_6`: bad vertices can hit 28 of the 32 antipodal pairs.
+  The full 32-pair obstruction is UNSAT with the zero-vertex symmetry breaks,
+  so every `Q_6` coloring has at least one bicross pair.  Searches for 29, 30,
+  and 31 pair hits did not finish quickly.
 - Local search in `Q_5` rediscovers 12- and 14-bad colorings, but short runs
   still leave multiple antipodal pairs with both endpoints in `G`.
 - The fixed-slice negation is exactly the assertion that `Bad` hits every
@@ -419,6 +425,19 @@ Counting route:
 - Doubling a 7-bad `Q_4` coloring with a constant new-coordinate color gives a
   14-bad `Q_5` coloring, so extremal-looking examples can lift by dimension
   doubling.  This gives `max_bad(Q_{m+1}) >= 2 * max_bad(Q_m)`.
+
+Slice-recursion route:
+
+- For a split, full bad vertices project to two sets `Bad_0, Bad_1` in
+  `Q_{m-1}`.
+- If full bad vertices hit every antipodal pair, then
+  `Bad_0 union anti(Bad_1) = Q_{m-1}` and
+  `Bad_1 union anti(Bad_0) = Q_{m-1}`.
+- Implemented `--show-slices` in `enc/bicross_probe.py` to compare full bad
+  sets with bad sets of induced slice colorings.
+- In the 14-bad `Q_5` SAT model, some coordinate splits have both sides equal
+  to 7-bad `Q_4` slices, with full bad exactly matching slice bad.  This is a
+  strong hint that a slice induction may be possible.
 
 One-switch geodesic route:
 

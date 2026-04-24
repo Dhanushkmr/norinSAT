@@ -238,6 +238,46 @@ Actual bad vertices: 14
 Actual good vertices: 18
 ```
 
+Pair-hit SAT checks:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 4 --sat-pairs-hit-at-least 8 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-pairs-hit-at-least 13 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 5 --sat-pairs-hit-at-least 12 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 6 --sat-pairs-hit-at-least 28 --solver cadical195
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py -m 6 --sat-pairs-hit-at-least 32 --solver cadical195 --sort-zero-edges --zero-red-degree-at-most-half
+```
+
+Expected behavior:
+
+```text
+Q_4, pair-hit lower bound 8: SAT: False
+Q_5, pair-hit lower bound 13: SAT: False
+Q_5, pair-hit lower bound 12: SAT: True
+Q_6, pair-hit lower bound 28: SAT: True
+Q_6, pair-hit lower bound 32 with symmetry breaks: SAT: False
+```
+
+`Q_6` searches for 29, 30, and 31 pair hits were started and stopped after they
+did not finish quickly.
+
+Slice-recursion diagnostics for a `Q_5` near-extremal:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 5 \
+  --sat-bad-at-least 14 \
+  --solver cadical195 \
+  --show-examples \
+  --show-slices
+```
+
+Expected behavior:
+
+- `Actual bad vertices: 14`
+- some coordinate summaries have `full_bad=(7,7)` and `slice_bad=(7,7)`;
+- in those summaries, full bad and slice bad match on both sides.
+
 Fixed-slice negation SAT check:
 
 ```bash

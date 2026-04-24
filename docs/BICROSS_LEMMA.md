@@ -362,6 +362,13 @@ Current evidence:
 - SAT for `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
   attainable.  The search for 15 bad vertices did not finish quickly, so the
   exact optimum is not known.
+- Pair-hit SAT for `Q_5`: bad vertices can hit 12 of the 16 antipodal pairs,
+  but cannot hit 13.  Thus every `Q_5` coloring has at least four bicross
+  pairs.
+- Pair-hit SAT for `Q_6`: bad vertices can hit 28 of the 32 antipodal pairs.
+  The full 32-pair obstruction is UNSAT with the zero-vertex symmetry breaks,
+  so every `Q_6` coloring has at least one bicross pair.  Searches for 29, 30,
+  and 31 pair hits did not finish quickly.
 - Local search in `Q_5` repeatedly finds 12- and 14-bad colorings, but still
   leaves several antipodal pairs with both endpoints in `G`.
 - Doubling a 7-bad `Q_4` coloring into two identical slices of `Q_5`, with all
@@ -380,6 +387,47 @@ cannot contain one representative from every antipodal pair.
 Equivalently, the fixed-slice negation is the statement that `Bad` hits every
 antipodal pair.  The counting lemma `|Bad| < 2^{m-1}` is a stronger sufficient
 condition, not a necessary one.
+
+The direct pair-hit SAT encoding is smaller than the fixed-slice-label encoding:
+for example, `Q_4` bicross negation is 568 variables and 2,352 clauses in the
+pair-hit encoding, versus 560 variables and 2,608 clauses in the label encoding.
+The pair-hit version also exposes stronger profile questions such as "can bad
+vertices hit at least `k` antipodal pairs?"
+With the zero-vertex symmetry breaks, the direct `Q_6` bicross negation has
+8,489 variables and 53,463 clauses.
+
+## Slice-Recursion Route
+
+For a coordinate split, write the full bad set as two projected sets
+`Bad_0, Bad_1` inside `Q_{m-1}`.
+
+If `Bad` hits every full antipodal pair, then for every projected vertex `a`:
+
+```text
+a in Bad_0 or anti(a) in Bad_1
+a in Bad_1 or anti(a) in Bad_0
+```
+
+Equivalently:
+
+```text
+Bad_0 union anti(Bad_1) = Q_{m-1}
+Bad_1 union anti(Bad_0) = Q_{m-1}
+```
+
+This is the natural induction interface.  The new slice analyzer compares
+`Bad_0, Bad_1` with the bad sets of the two induced `Q_{m-1}` colorings.
+
+Current observations:
+
+- In the 14-bad `Q_5` SAT model, several coordinate splits have both sides
+  equal to 7-bad `Q_4` slices, and the full bad set matches the slice bad sets
+  exactly.
+- In other splits, connectors create extra full bad vertices beyond the slice
+  bad sets.
+- This suggests a possible induction theorem: if a full bad set comes close to
+  hitting every antipodal pair, then some coordinate split should expose two
+  lower-dimensional bad sets that also come close to hitting every pair.
 
 ## One-Switch Geodesic Route
 

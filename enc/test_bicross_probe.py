@@ -10,10 +10,12 @@ from bicross_probe import (
     construct_bad_antipodal_labeling,
     good_vertices,
     encode_fixed_slice_negation,
+    encode_pair_hit_bound,
     fixed_slice_witness,
     iter_antipodal_labelings,
     monotone_geodesic_vertices,
     random_edge_coloring,
+    slice_summaries,
     validate_bad_labeling,
 )
 from induction_probe import all_edges
@@ -68,6 +70,18 @@ class BicrossProbeTests(unittest.TestCase):
 
         self.assertFalse(validate_bad_labeling(coloring, 2, labels))
 
+    def test_slice_summary_for_monochromatic_q3(self):
+        _, _, edges = all_edges(3)
+        coloring = arbitrary_coloring_from_bits(edges, [0] * len(edges))
+
+        for summary in slice_summaries(coloring, 3):
+            self.assertEqual(summary.full_bad_side0, 0)
+            self.assertEqual(summary.full_bad_side1, 0)
+            self.assertEqual(summary.slice_bad_side0, 0)
+            self.assertEqual(summary.slice_bad_side1, 0)
+            self.assertTrue(summary.identical_slices)
+            self.assertTrue(summary.uniform_connectors)
+
 
 class OptionalSatBicrossTests(unittest.TestCase):
     def test_fixed_slice_negation_unsat_for_q3_q4(self):
@@ -94,6 +108,18 @@ class OptionalSatBicrossTests(unittest.TestCase):
         solver, _, _, _, _ = encode_bad_count_bound(4, bad_bound=8)
         try:
             self.assertFalse(solver.solve(), "Q_4 should not have 8 bad vertices")
+        finally:
+            solver.delete()
+
+    def test_pair_hit_bound_for_q4(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        solver, _, _, _, _, _ = encode_pair_hit_bound(4, hit_bound=8)
+        try:
+            self.assertFalse(solver.solve(), "Q_4 bad vertices should not hit every antipodal pair")
         finally:
             solver.delete()
 
