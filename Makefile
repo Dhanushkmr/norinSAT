@@ -10,13 +10,14 @@ PY_SOURCES = \
 	enc/one_connector_witness_sat.py \
 	enc/bicross_probe.py \
 	enc/bicross_cube_search.py \
+	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
 	enc/sat_utils.py \
 	enc/test_component_chain_classifier.py \
 	enc/test_bicross_cube_search.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-q7-portfolio bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -255,3 +256,52 @@ bicross-q7-portfolio:
 		--sat-pairs-hit-at-least 64 \
 		--sort-zero-edges \
 		--zero-red-degree-at-most-half
+
+bicross-q7-full-cubes:
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 7 \
+		--hit-bound 64 \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 20000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 7 \
+		--hit-bound 64 \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--only-cube-indexes 0,1,2,3,6,7,14,15 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 500000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 7 \
+		--hit-bound 64 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 0-15,32-47,96-127,224-255 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 50000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+
+bicross-q7-lift-search:
+	$(PYSAT_PYTHON) enc/bicross_lift_search.py \
+		-m 7 \
+		--seed-hit-bound 28 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--scan-neighborhood \
+		--greedy-passes 5 \
+		--steps 5000 \
+		--restarts 8

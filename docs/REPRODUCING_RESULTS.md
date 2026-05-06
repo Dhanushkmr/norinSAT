@@ -339,6 +339,23 @@ uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
 
 Expected behavior: `SAT: True` and `Encoded hit pairs: 28`.
 
+Current `Q_7` full-obstruction frontier:
+
+```bash
+make bicross-q7-full-cubes
+make bicross-q7-lift-search
+```
+
+Expected behavior for `bicross-q7-full-cubes`: the target is still partial.
+The first stage proves 248/256 depth-8 prefix cubes UNSAT at 20k conflicts and
+leaves `0,1,2,3,6,7,14,15` UNKNOWN.  Later stages descend the current hard set
+but still leave UNKNOWN cubes.
+
+Expected behavior for `bicross-q7-lift-search`: the script solves the exact
+`Q_6` 28-hit seed, doubles it into `Q_7`, and reports a stable 56-hit coloring
+with profile `both_good=8, one_good=38, both_bad=18`.  The one-flip scan reports
+0 improving edges and 152 neutral edges.
+
 Slice-recursion diagnostics for a `Q_5` near-extremal:
 
 ```bash

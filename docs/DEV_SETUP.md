@@ -71,6 +71,8 @@ make bicross-q6-hit31-proof
 make bicross-q6-hit30-proof
 make bicross-q6-hit29-proof
 make bicross-q7-portfolio
+make bicross-q7-full-cubes
+make bicross-q7-lift-search
 ```
 
 `make bicross-q6-frontier` runs a solver portfolio on the hard 29-hit question.
@@ -79,3 +81,9 @@ assumption split of the same formula.  The `hit31`, `hit30`, and `hit29` proof
 targets replay the staged cube proofs; `hit29` is the exact current frontier
 and uses all available cores by default.  Set `JOBS=4` or similar to cap CPU
 usage.
+
+`make bicross-q7-full-cubes` replays the current partial cube-and-conquer
+frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;
+the expected result is a shrinking UNKNOWN set.  `make bicross-q7-lift-search`
+constructs the doubled `Q_6` extremal inside `Q_7` and checks its local-search
+neighborhood.

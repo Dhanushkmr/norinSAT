@@ -527,6 +527,25 @@ Latest experiment log:
 - Consequence: every `Q_6` coloring has at least four bicross antipodal pairs.
   This matches the exact `Q_5` bicross-pair guarantee, even though the `Q_6`
   search space is much larger.
+- Started the analogous `Q_7` full-obstruction search (`pair-hit >=64`).
+  With `--partial-sym-break 20`, depth-8 prefix cubing proves 248/256 cubes
+  UNSAT at 20k conflicts, leaving `0,1,2,3,6,7,14,15` UNKNOWN.  A 500k pass on
+  those eight proves cubes `1` and `3` UNSAT, leaving `0,2,6,7,14,15`.
+- Descending the six `Q_7` depth-8 survivors to depth 12 gives 96 subcubes:
+  67 UNSAT and 29 UNKNOWN at 50k conflicts.  A 500k pass reduces the 29 to 27
+  UNKNOWN.  Descending those to depth 16 gives 432 subcubes: 235 UNSAT and 197
+  UNKNOWN at 50k conflicts.  No SAT cube has appeared.
+- A depth-8 spread cubing for `Q_7` is worse: only 128/256 cubes UNSAT at 20k
+  conflicts.  Raising the partial symmetry cap from 20 to 40 does not change
+  the prefix depth-8 survivor set.
+- Added `enc/bicross_lift_search.py`.  It solves a high-hit seed in `Q_6`,
+  doubles it into `Q_7`, and searches locally from that lifted near-obstruction.
+  The exact `Q_6` 28-hit model doubles to a `Q_7` 56-hit coloring with profile
+  `both_good=8, one_good=38, both_bad=18`.
+- The doubled `Q_6` extremal is a one-edge local optimum for the `Q_7`
+  pair-hit objective: a full one-flip scan finds 0 improving edges and 152
+  neutral edges.  A kicked/annealed search over 8 restarts and 15k flips per
+  restart did not improve beyond 56 hit pairs.
 
 One-switch geodesic route:
 

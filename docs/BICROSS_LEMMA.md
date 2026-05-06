@@ -384,6 +384,13 @@ Current evidence:
 - The direct `Q_7` full-obstruction CNF has 33,420 variables and 246,175
   clauses with the zero-vertex symmetry breaks.  A 180-second `cadical195` run
   timed out.
+- With coordinate/bit-flip symmetry breaking, `Q_7` pair-hit 64 now has a
+  partial cube-and-conquer frontier: depth-8 prefix cubing proves 248/256 cubes
+  UNSAT at 20k conflicts; descending the remaining hard cubes to depth 16 still
+  leaves 197 UNKNOWN descendants at 50k conflicts.  No SAT cube has appeared.
+- Doubling the exact `Q_6` 28-hit model gives a `Q_7` 56-hit model.  This
+  lifted coloring is a one-edge local optimum for pair-hit: 0 improving flips
+  and 152 neutral flips.
 - Local search in `Q_5` repeatedly finds 12- and 14-bad colorings, but still
   leaves several antipodal pairs with both endpoints in `G`.
 - Doubling a 7-bad `Q_4` coloring into two identical slices of `Q_5`, with all

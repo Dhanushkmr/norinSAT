@@ -217,3 +217,56 @@ resolved the frontier.  The mathematical signal is stronger than mere existence:
 even in a near-obstruction, four antipodal pairs survive as bicross pairs.  That
 suggests the proof should look for a counting or separation theorem for the set
 `G`, not for a unique canonical extremal coloring.
+
+## Attempt 6: Q7 Full Obstruction
+
+The next SAT target is the `Q_7` ordinary-cube bicross obstruction:
+
+```text
+Can Bad hit all 64 antipodal pairs?
+```
+
+This is the pair-hit `>=64` formula for `Q_7`.  If it is UNSAT, the bicross
+lemma holds for `Q_7`, which would push the one-connector route one dimension
+further.
+
+What worked:
+
+- Prefix cubing with `--partial-sym-break 20` is much stronger than spread
+  cubing.
+- Depth 8, prefix, 20k conflicts:
+  248/256 cubes UNSAT, 8 UNKNOWN (`0,1,2,3,6,7,14,15`).
+- Depth 8 survivors, 500k conflicts:
+  cubes `1` and `3` become UNSAT; `0,2,6,7,14,15` remain UNKNOWN.
+- Descending those six survivors to depth 12:
+  67/96 descendants UNSAT at 50k; 27 descendants remain UNKNOWN after a 500k
+  pass.
+- Descending those 27 survivors to depth 16:
+  235/432 descendants UNSAT at 50k; 197 remain UNKNOWN.
+
+What did not work:
+
+- A 2M-conflict pass on the six hard depth-8 cubes proved none of them.
+- Spread cubing at depth 8 left 128/256 cubes UNKNOWN, much worse than prefix.
+- Increasing the partial symmetry cap from 20 to 40 did not reduce the depth-8
+  prefix survivor set.
+- A direct unbounded-looking SAT solve for pair-hit `>=63` was stopped after a
+  short wait without a result.
+
+Lifted near-obstruction:
+
+- The exact `Q_6` 28-hit model doubles into `Q_7` with 56/64 pairs hit:
+  `both_good=8`, `one_good=38`, `both_bad=18`.
+- A full one-edge scan of this doubled coloring finds 0 improving flips and 152
+  neutral flips for the pair-hit objective.
+- Kicked/annealed local search from the doubled seed did not improve beyond
+  56/64 in the tested runs.
+
+Interpretation:
+
+There are now two parallel clues.  SAT cubing has not found a full `Q_7`
+obstruction, but exact proof is still blocked by many depth-16 descendants.
+On the construction side, the natural doubled `Q_6` extremal is a surprisingly
+stable 56-hit local optimum.  The next useful experiment is likely not "more
+random search", but a better model generator for `Q_7` near-obstructions or an
+adaptive cube splitter that chooses variables from the hard depth-16 regions.
