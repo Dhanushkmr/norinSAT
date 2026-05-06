@@ -1,6 +1,7 @@
 PYTHON ?= python3
 UV ?= uv
 PYSAT_PYTHON = $(UV) run --python 3.12 --with python-sat python
+JOBS ?= 0
 
 PY_SOURCES = \
 	enc/induction_probe.py \
@@ -12,17 +13,20 @@ PY_SOURCES = \
 	enc/sat_portfolio.py \
 	enc/sat_utils.py \
 	enc/test_component_chain_classifier.py \
+	enc/test_bicross_cube_search.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-q7-portfolio bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof
+.PHONY: test test-sat test-all list-solvers bicross-q7-portfolio bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
 	$(PYTHON) enc/test_bicross_probe.py
+	$(PYTHON) enc/test_bicross_cube_search.py
 	$(PYTHON) enc/test_component_chain_classifier.py
 
 test-sat:
 	$(PYSAT_PYTHON) enc/test_bicross_probe.py
+	$(PYSAT_PYTHON) enc/test_bicross_cube_search.py
 	$(PYSAT_PYTHON) enc/test_component_chain_classifier.py
 
 test-all: test test-sat
@@ -55,7 +59,7 @@ bicross-q6-hit31-proof:
 		--hit-bound 31 \
 		--cube-depth 8 \
 		--cube-mode prefix \
-		--jobs 11 \
+		--jobs $(JOBS) \
 		--batch-size 4 \
 		--conflict-budget 20000 \
 		--sort-zero-edges \
@@ -67,7 +71,7 @@ bicross-q6-hit31-proof:
 		--cube-depth 8 \
 		--cube-mode prefix \
 		--only-cube-indexes 0,1,4,5,12,13,28,29,31 \
-		--jobs 9 \
+		--jobs $(JOBS) \
 		--batch-size 1 \
 		--conflict-budget 500000 \
 		--sort-zero-edges \
@@ -79,7 +83,165 @@ bicross-q6-hit31-proof:
 		--cube-depth 8 \
 		--cube-mode prefix \
 		--only-cube-indexes 12,29 \
-		--jobs 2 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 2000000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+
+bicross-q6-hit30-proof:
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 30 \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 20000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 30 \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--only-cube-indexes 0,1,4,5,12,13,15,28,29,31 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 2000000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 30 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 64-79,192-207,464-479 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 50000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 30 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 66,68,69,70,71,76,77,78,79,198,199,200,201,202,203,206,207,464,465,466,467,470,471,478,479 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 500000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 30 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 68,70,78,198,200,202,206,467,471 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 2000000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+
+bicross-q6-hit29-proof:
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 20000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--only-cube-indexes 0,1,4,5,12,13,15,28,29,31 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 2000000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 0-15,64-79,192-207,448-479 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 50000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 0,1,2,3,6,7,14,15,66,67,68,69,70,71,76,77,78,79,198,199,200,201,202,203,206,207,462,463,464,465,466,467,470,471,478,479 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 500000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 0,2,6,14,66,68,70,76,78,79,198,200,202,203,206,207,462,463,464,465,466,467,470,471,479 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 2000000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 16 \
+		--cube-mode prefix \
+		--only-cube-indexes 1120-1135,1248-1263,3168-3183,3200-3215,3232-3247,3296-3311,7392-7407 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 50000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 16 \
+		--cube-mode prefix \
+		--only-cube-indexes 1123,1124,1125,1126,1127,1132,1133,1134,1135,1255,1256,1257,1258,1259,1262,1263,3171,3172,3173,3175,3180,3181,3204,3205,3207,3208,3209,3211,3212,3213,3215,3237,3238,3239,3240,3241,3242,3243,3244,3245,3246,3247,3303,3304,3305,3307,3308,3309,3311,7399,7400,7401,7403,7407 \
+		--jobs $(JOBS) \
+		--batch-size 1 \
+		--conflict-budget 500000 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 29 \
+		--cube-depth 16 \
+		--cube-mode prefix \
+		--only-cube-indexes 1123,1125,1126,1127,1257,3171,3173,3175,3238,3239,3241,3243,3303,3305,3307,3309,7399,7403 \
+		--jobs $(JOBS) \
 		--batch-size 1 \
 		--conflict-budget 2000000 \
 		--sort-zero-edges \

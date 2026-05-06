@@ -286,42 +286,58 @@ The recommended next run is the all-core portfolio version:
 make bicross-q7-portfolio
 ```
 
-For the unresolved `Q_6` 29-hit frontier, there are two all-core helpers:
+For quick exploratory work on the `Q_6` 29-hit formula, there are two all-core
+helpers:
 
 ```bash
 make bicross-q6-frontier
 make bicross-q6-cubes
 ```
 
-The current strongest `Q_6` pair-hit result is:
+The current strongest `Q_6` pair-hit result is exact:
+
+```bash
+make bicross-q6-hit29-proof
+```
+
+Expected behavior: the intermediate stages intentionally report some UNKNOWN
+cubes and continue; the final stage reports `Selected cubes SAT: False`.  The
+proof covers all depth-8 prefix cubes by recursively descending only the
+survivors:
+
+- depth 8 leaves `0,4,12,28,29` after the 2M pass;
+- depth 12 leaves `70,78,198,200,202,206,462` after the 2M pass;
+- depth 16 leaves `1123,1125,1126,1127,1257,3171,3173,3175,3238,3239,3241,3243,3303,3305,3307,3309,7399,7403`;
+- those last 18 depth-16 cubes all prove UNSAT at 2M conflicts per cube.
+
+Together with the direct SAT model for 28 hit pairs, this proves that the exact
+`Q_6` pair-hit maximum is 28 of 32.
+
+The shorter historical proof targets are still available:
 
 ```bash
 make bicross-q6-hit31-proof
+make bicross-q6-hit30-proof
 ```
 
-Expected behavior: the first two stages report some UNKNOWN cubes, and the
-final stage reports `Selected cubes SAT: False`.  Together with the first-stage
-UNSAT cubes, this proves `Q_6` has no coloring whose bad vertices hit 31 of the
-32 antipodal pairs.
+The `hit31` target proves at least two bicross pairs in every `Q_6` coloring;
+the `hit30` target strengthens this to at least three bicross pairs.  The
+`hit29` target is the exact frontier and strengthens this to at least four
+bicross pairs.
 
-The next hard frontier is 30 hit pairs.  The best run so far used:
+A 28-hit model can be checked directly:
 
 ```bash
-uv run --python 3.12 --with python-sat python enc/bicross_cube_search.py \
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
   -m 6 \
-  --hit-bound 30 \
-  --cube-depth 8 \
-  --cube-mode prefix \
+  --sat-pairs-hit-at-least 28 \
+  --solver cadical195 \
   --sort-zero-edges \
   --zero-red-degree-at-most-half \
-  --partial-sym-break 20 \
-  --conflict-budget 20000
+  --partial-sym-break 20
 ```
 
-That leaves cube indexes `0,1,4,5,12,13,15,28,29,31` UNKNOWN.  Raising the
-budget to 2,000,000 conflicts on those cubes proves all but `4,12,29` UNSAT.
-Cube `4` then timed out across the full PySAT portfolio at 300 seconds per
-solver.
+Expected behavior: `SAT: True` and `Encoded hit pairs: 28`.
 
 Slice-recursion diagnostics for a `Q_5` near-extremal:
 

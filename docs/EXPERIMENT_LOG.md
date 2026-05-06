@@ -179,3 +179,41 @@ What remains open:
 - Prove the one-connector lemma combinatorially.
 - Or push the SAT negation to `n=8` and beyond using longer external solves,
   cube-and-conquer, or a Lean/CNF-backed certificate workflow.
+
+## Attempt 5: Bicross Pair-Hit Frontier
+
+The one-connector route reduces Norine to the ordinary-cube bicross lemma.  For
+an edge-coloring of `Q_m`, define `G` as the vertices `x` where the red component
+of `x` intersects the blue component of `anti(x)`.  A bicross antipodal pair is
+an antipodal pair with both endpoints in `G`.
+
+The SAT question is:
+
+> How many antipodal pairs can be hit by `Bad = V \ G`?
+
+If `Bad` hits at most 28 of the 32 antipodal pairs in `Q_6`, then every `Q_6`
+coloring has at least four bicross pairs.
+
+What worked:
+
+- Added coordinate/bit-flip lex symmetry breaking with `--partial-sym-break 20`.
+- Added `enc/bicross_cube_search.py` to split the pair-hit formula into
+  assumption cubes and run them across all cores.
+- Proved `Q_6` pair-hit `>=31`, then `>=30`, then `>=29` UNSAT by staged
+  prefix cube proofs.
+- Found a direct SAT model for `Q_6` pair-hit `>=28`.
+
+Current result:
+
+```text
+Q_6 max pair-hit = 28 of 32.
+Therefore every Q_6 ordinary cube coloring has at least four bicross antipodal pairs.
+```
+
+Why it matters:
+
+The direct all-solver portfolio timed out at 29 hit pairs, but cube-and-conquer
+resolved the frontier.  The mathematical signal is stronger than mere existence:
+even in a near-obstruction, four antipodal pairs survive as bicross pairs.  That
+suggests the proof should look for a counting or separation theorem for the set
+`G`, not for a unique canonical extremal coloring.

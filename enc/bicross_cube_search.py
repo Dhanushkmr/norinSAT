@@ -54,11 +54,15 @@ def choose_cube_edges(edges, depth, mode, seed, offset=0):
         return tuple(edges[offset : offset + depth])
 
     if mode == "zero-pattern-tail":
-        zero_pattern_edges = edges[:6]
+        dimension = len(edges[0][0]) if edges else 0
+        zero_pattern_edges = edges[:dimension]
         tail_depth = depth - len(zero_pattern_edges)
         if tail_depth <= 0:
             return tuple(zero_pattern_edges[:depth])
-        return tuple(zero_pattern_edges + edges[offset : offset + tail_depth])
+        tail_start = max(offset, len(zero_pattern_edges))
+        if tail_start + tail_depth > len(edges):
+            raise ValueError(f"not enough tail edges from offset {tail_start} for cube depth {depth}")
+        return tuple(zero_pattern_edges + edges[tail_start : tail_start + tail_depth])
 
     raise ValueError(f"unknown cube selection mode: {mode}")
 
@@ -183,7 +187,7 @@ def run(args):
     print(f"Solver: {solver_name}", flush=True)
     print(f"Workers: {jobs} (available cores: {effective_cpu_count()})", flush=True)
     print(f"Cube depth: {args.cube_depth}", flush=True)
-    print(f"Cubes: {len(indexed_cubes)}/{len(cubes)}", flush=True)
+    print(f"Cubes selected: {len(indexed_cubes)}/{len(cubes)}", flush=True)
     print(f"Batches: {len(batches)}", flush=True)
     print("Cube edges: " + ", ".join(f"{u}-{v}" for u, v in cube_edges), flush=True)
     if args.conflict_budget:
@@ -216,7 +220,8 @@ def run(args):
     elapsed = time.monotonic() - started
     solved = totals["sat"] + totals["unsat"] + totals["unknown"]
     print(f"Elapsed: {elapsed:.2f}s", flush=True)
-    print(f"Cubes solved: {solved}/{len(cubes)}", flush=True)
+    print(f"Selected cubes solved: {solved}/{len(indexed_cubes)}", flush=True)
+    print(f"Total cube space: {len(cubes)}", flush=True)
     print(f"SAT cubes: {totals['sat']}", flush=True)
     print(f"UNSAT cubes: {totals['unsat']}", flush=True)
     print(f"UNKNOWN cubes: {totals['unknown']}", flush=True)

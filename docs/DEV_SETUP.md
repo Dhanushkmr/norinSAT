@@ -68,11 +68,14 @@ Useful Make targets:
 make bicross-q6-frontier
 make bicross-q6-cubes
 make bicross-q6-hit31-proof
+make bicross-q6-hit30-proof
+make bicross-q6-hit29-proof
 make bicross-q7-portfolio
 ```
 
-`make bicross-q6-frontier` runs a solver portfolio on the unresolved 29-hit
-question.  `make bicross-q6-cubes` instead uses one preferred solver over a
-parallel assumption split of the same formula.
-`make bicross-q6-hit31-proof` replays the cube proof that `Q_6` cannot have
-bad vertices hitting 31 of the 32 antipodal pairs.
+`make bicross-q6-frontier` runs a solver portfolio on the hard 29-hit question.
+`make bicross-q6-cubes` instead uses one preferred solver over a parallel
+assumption split of the same formula.  The `hit31`, `hit30`, and `hit29` proof
+targets replay the staged cube proofs; `hit29` is the exact current frontier
+and uses all available cores by default.  Set `JOBS=4` or similar to cap CPU
+usage.

@@ -257,3 +257,7 @@ component theorem for edge-colorings of `Q_m`.
 The standalone note `docs/BICROSS_LEMMA.md` tracks this reduced theorem.  The
 probe script `enc/bicross_probe.py` checks arbitrary cube edge-colorings,
 antipodal connector-labelings, and the SAT negation of the fixed-slice lemma.
+The strongest current finite signal is the exact `Q_6` pair-hit frontier:
+`Bad = V \ G` can hit 28 of 32 antipodal pairs, but cannot hit 29.  So in
+`Q_6` every coloring has at least four bicross antipodal pairs, even before
+using the full antipodal-cube structure.

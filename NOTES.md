@@ -411,23 +411,20 @@ Counting route:
   `Q_2` max hit pairs = 1 of 2,
   `Q_3` max hit pairs = 2 of 4,
   `Q_4` max hit pairs = 6 of 8,
-  `Q_5` max hit pairs = 12 of 16.
-  The `Q_6` lower bound is at least 28 of 32, already above the pure doubling
-  lower bound of 24.
+  `Q_5` max hit pairs = 12 of 16,
+  `Q_6` max hit pairs = 28 of 32.
+  The `Q_6` maximum is already above the pure doubling lower bound of 24.
 - SAT `Q_4`: no coloring has 8 bad vertices, but a coloring with 7 bad
   vertices exists; therefore minimum `|G| = 9`.
 - SAT `Q_5`: a coloring with 14 bad vertices exists, so `|G| = 18` is
   attainable.  The search for 15 bad vertices did not finish quickly.
 - Pair-hit SAT `Q_5`: bad vertices can hit 12 of the 16 antipodal pairs, but
   cannot hit 13.  So every `Q_5` coloring has at least four bicross pairs.
-- Pair-hit SAT `Q_6`: bad vertices can hit 28 of the 32 antipodal pairs.
-  The full 32-pair obstruction is UNSAT with the zero-vertex symmetry breaks,
-  so every `Q_6` coloring has at least one bicross pair.  Searches for 29, 30,
-  and 31 pair hits did not finish quickly.
-- A 90-second-per-solver sweep for `Q_6` at 29 hit pairs with `cadical195`,
-  `glucose4`, `maplechrono`, and `kissat404` also timed out.  The frontier is
-  real enough that stronger cardinality claims need better structure, not just
-  a different default solver.
+- Pair-hit SAT `Q_6`: bad vertices can hit 28 of the 32 antipodal pairs, but
+  not 29.  So every `Q_6` coloring has at least four bicross pairs.
+- Earlier 90-second and 300-second portfolio sweeps for `Q_6` at 29 hit pairs
+  timed out.  The later cube proof shows this was a coarse-search limitation,
+  not a satisfying obstruction.
 - The direct `Q_7` full-obstruction CNF has 33,420 variables and 246,175
   clauses with the zero-vertex symmetry breaks.  A 180-second `cadical195` run
   timed out, so this is now a benchmark, not a result.
@@ -495,7 +492,8 @@ Dev/SAT setup note:
 Latest experiment log:
 
 - Full portfolio, `Q_6`, pair-hit `>=29`, zero-vertex breaks, 300 seconds per
-  solver: every available PySAT backend timed out.
+  solver: every available PySAT backend timed out.  This was a solver-budget
+  roadblock, not evidence for a model.
 - Spread cube split for `Q_6`, pair-hit `>=29`, depth 8, 100k conflicts per
   cube: 128 UNSAT cubes and 128 UNKNOWN cubes.
 - Prefix cube split for `Q_6`, pair-hit `>=29`, depth 8, 20k conflicts per
@@ -512,11 +510,23 @@ Latest experiment log:
   proved UNSAT at 500k conflicts, and the last two cubes (`12,29`) proved
   UNSAT at 2M conflicts.  Therefore every `Q_6` coloring has at least two
   bicross antipodal pairs.
-- With `--partial-sym-break 20`, `Q_6`, pair-hit `>=30` is the new hard
-  frontier.  Prefix cubes prove 246/256 UNSAT at 20k conflicts; 7 of the 10
-  remaining cubes prove UNSAT at 2M conflicts; cubes `4,12,29` remain UNKNOWN.
-  Cube `4` also timed out across the full PySAT portfolio at 300 seconds per
-  solver.
+- With `--partial-sym-break 20`, `Q_6`, pair-hit `>=30` is UNSAT by a focused
+  cube proof:
+  first 246/256 depth-8 prefix cubes proved UNSAT at 20k conflicts, 7 of the
+  10 remaining depth-8 cubes proved UNSAT at 2M conflicts, descendants of the
+  three survivors (`4,12,29`) at depth 12 reduced to 9 UNKNOWN cubes, and those
+  9 depth-12 cubes proved UNSAT at 2M conflicts.  Therefore every `Q_6`
+  coloring has at least three bicross antipodal pairs.
+- With `--partial-sym-break 20`, `Q_6`, pair-hit `>=29` is also UNSAT by a
+  deeper cube proof:
+  depth 8 left cubes `0,4,12,28,29` UNKNOWN after the 2M pass; their depth-12
+  descendants reduced to 7 UNKNOWN cubes (`70,78,198,200,202,206,462`); their
+  depth-16 descendants reduced to 18 UNKNOWN cubes; and those final 18
+  depth-16 cubes all proved UNSAT at 2M conflicts.  Since a 28-pair-hit model
+  exists, the exact `Q_6` pair-hit maximum is 28 of 32.
+- Consequence: every `Q_6` coloring has at least four bicross antipodal pairs.
+  This matches the exact `Q_5` bicross-pair guarantee, even though the `Q_6`
+  search space is much larger.
 
 One-switch geodesic route:
 
