@@ -351,6 +351,27 @@ The first stage proves 248/256 depth-8 prefix cubes UNSAT at 20k conflicts and
 leaves `0,1,2,3,6,7,14,15` UNKNOWN.  Later stages descend the current hard set
 but still leave UNKNOWN cubes.
 
+For deeper refinements, use the adaptive helper.  The current depth-20 map was
+produced from the 197 hard depth-16 cubes with:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_adaptive_cube_search.py \
+  -m 7 \
+  --hit-bound 64 \
+  --parent-depth 16 \
+  --parent-indexes <depth-16-unknown-ranges> \
+  --depths 20 \
+  --batch-size 8 \
+  --conflict-budget 10000 \
+  --sort-zero-edges \
+  --zero-red-degree-at-most-half \
+  --partial-sym-break 20 \
+  --log-file /tmp/q7_depth20_10k.jsonl
+```
+
+Expected behavior: 1,520/3,152 depth-20 descendants UNSAT at 10k conflicts,
+with 1,632 UNKNOWN and no SAT cube.
+
 Expected behavior for `bicross-q7-lift-search`: the script solves the exact
 `Q_6` 28-hit seed, doubles it into `Q_7`, and reports a stable 56-hit coloring
 with profile `both_good=8, one_good=38, both_bad=18`.  The one-flip scan reports

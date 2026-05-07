@@ -87,3 +87,8 @@ frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;
 the expected result is a shrinking UNKNOWN set.  `make bicross-q7-lift-search`
 constructs the doubled `Q_6` extremal inside `Q_7` and checks its local-search
 neighborhood.
+
+For deeper nested refinements, use `enc/bicross_adaptive_cube_search.py`.  It
+accepts parent cube indexes, descends only those parents to deeper prefix cubes,
+and can write a JSONL stage log with `--log-file`.  This is the preferred helper
+for continuing the `Q_7` depth-16/depth-20 frontier.

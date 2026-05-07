@@ -243,6 +243,11 @@ What worked:
   pass.
 - Descending those 27 survivors to depth 16:
   235/432 descendants UNSAT at 50k; 197 remain UNKNOWN.
+- Added `enc/bicross_adaptive_cube_search.py` so UNKNOWN parent cubes can be
+  descended automatically while preserving a JSONL proof trail.
+- Descending the 197 hard depth-16 cubes to depth 20 with the prefix edge order:
+  1,520/3,152 descendants UNSAT at 10k conflicts; 1,632 remain UNKNOWN.  No SAT
+  cube appears.
 
 What did not work:
 
@@ -250,6 +255,11 @@ What did not work:
 - Spread cubing at depth 8 left 128/256 cubes UNKNOWN, much worse than prefix.
 - Increasing the partial symmetry cap from 20 to 40 did not reduce the depth-8
   prefix survivor set.
+- A spread-tail adaptive split, keeping the first 16 prefix edges and choosing
+  four later variables spread across the remaining edge list, was worse than
+  the prefix tail on the sampled hard parents.
+- A 50k pass over the 1,632 depth-20 prefix-tail survivors was stopped after the
+  early batches were mostly UNKNOWN; this is now a compute-heavy frontier.
 - A direct unbounded-looking SAT solve for pair-hit `>=63` was stopped after a
   short wait without a result.
 
@@ -267,6 +277,7 @@ Interpretation:
 There are now two parallel clues.  SAT cubing has not found a full `Q_7`
 obstruction, but exact proof is still blocked by many depth-16 descendants.
 On the construction side, the natural doubled `Q_6` extremal is a surprisingly
-stable 56-hit local optimum.  The next useful experiment is likely not "more
-random search", but a better model generator for `Q_7` near-obstructions or an
-adaptive cube splitter that chooses variables from the hard depth-16 regions.
+stable 56-hit local optimum.  The next useful experiment is likely either
+substantially more parallel cube compute, or a smarter splitter that learns
+variables from the hard depth-20 regions rather than following a fixed edge
+order.

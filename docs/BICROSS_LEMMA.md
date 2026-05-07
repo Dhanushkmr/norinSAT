@@ -387,7 +387,8 @@ Current evidence:
 - With coordinate/bit-flip symmetry breaking, `Q_7` pair-hit 64 now has a
   partial cube-and-conquer frontier: depth-8 prefix cubing proves 248/256 cubes
   UNSAT at 20k conflicts; descending the remaining hard cubes to depth 16 still
-  leaves 197 UNKNOWN descendants at 50k conflicts.  No SAT cube has appeared.
+  leaves 197 UNKNOWN descendants at 50k conflicts.  Descending those to depth
+  20 gives 1,520/3,152 UNSAT at 10k conflicts, with no SAT cube appearing.
 - Doubling the exact `Q_6` 28-hit model gives a `Q_7` 56-hit model.  This
   lifted coloring is a one-edge local optimum for pair-hit: 0 improving flips
   and 152 neutral flips.

@@ -535,6 +535,18 @@ Latest experiment log:
   67 UNSAT and 29 UNKNOWN at 50k conflicts.  A 500k pass reduces the 29 to 27
   UNKNOWN.  Descending those to depth 16 gives 432 subcubes: 235 UNSAT and 197
   UNKNOWN at 50k conflicts.  No SAT cube has appeared.
+- Added `enc/bicross_adaptive_cube_search.py` to run nested-prefix refinement
+  without hand-expanding child cube ranges.  It keeps a JSONL proof trail and
+  can descend parent UNKNOWN indexes automatically.
+- Descending the 197 hard `Q_7` depth-16 cubes to depth 20 with the prefix edge
+  order gives 3,152 descendants.  At 10k conflicts per cube, 1,520 prove UNSAT
+  and 1,632 remain UNKNOWN; no SAT cube appears.
+- A 50k pass over those 1,632 depth-20 survivors was stopped after the early
+  batches were overwhelmingly UNKNOWN.  Local 11-core compute is useful for
+  mapping, but not enough to brute-force this frontier comfortably.
+- A spread-tail split that keeps the first 16 prefix edges but chooses the next
+  four variables spread across the remaining edge list is worse than the prefix
+  tail on the tested hard parents.  Prefix-tail remains the better local split.
 - A depth-8 spread cubing for `Q_7` is worse: only 128/256 cubes UNSAT at 20k
   conflicts.  Raising the partial symmetry cap from 20 to 40 does not change
   the prefix depth-8 survivor set.

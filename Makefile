@@ -10,10 +10,12 @@ PY_SOURCES = \
 	enc/one_connector_witness_sat.py \
 	enc/bicross_probe.py \
 	enc/bicross_cube_search.py \
+	enc/bicross_adaptive_cube_search.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
 	enc/sat_utils.py \
 	enc/test_component_chain_classifier.py \
+	enc/test_bicross_adaptive_cube_search.py \
 	enc/test_bicross_cube_search.py \
 	enc/test_bicross_probe.py
 
@@ -22,11 +24,13 @@ PY_SOURCES = \
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
 	$(PYTHON) enc/test_bicross_probe.py
+	$(PYTHON) enc/test_bicross_adaptive_cube_search.py
 	$(PYTHON) enc/test_bicross_cube_search.py
 	$(PYTHON) enc/test_component_chain_classifier.py
 
 test-sat:
 	$(PYSAT_PYTHON) enc/test_bicross_probe.py
+	$(PYSAT_PYTHON) enc/test_bicross_adaptive_cube_search.py
 	$(PYSAT_PYTHON) enc/test_bicross_cube_search.py
 	$(PYSAT_PYTHON) enc/test_component_chain_classifier.py
 
