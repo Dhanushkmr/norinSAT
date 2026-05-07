@@ -229,6 +229,7 @@ def run(args):
         sort_zero_edges=args.sort_zero_edges,
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
         partial_sym_break=args.partial_sym_break,
+        forbid_cell_pairs=args.forbid_cell_pairs,
     )
     solver.delete()
 
@@ -250,6 +251,8 @@ def run(args):
     print(f"Pair-hit lower bound: {args.hit_bound}", flush=True)
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
+    if args.forbid_cell_pairs:
+        print("Restriction: no antipodal pair may share both red and blue components", flush=True)
     print(f"Depth schedule: {','.join(str(depth) for depth in depths)}", flush=True)
     print(f"Tail start depth: {tail_start_depth}", flush=True)
     print(f"Tail mode: {args.tail_mode}", flush=True)
@@ -298,6 +301,7 @@ def parse_args():
     parser.add_argument("--sort-zero-edges", action="store_true", help="Sort colors incident to 00...0")
     parser.add_argument("--zero-red-degree-at-most-half", action="store_true", help="Bound red degree at 00...0")
     parser.add_argument("--partial-sym-break", type=int, default=0, help="Coordinate/bit-flip lex comparison cap")
+    parser.add_argument("--forbid-cell-pairs", action="store_true", help="Forbid antipodal pairs inside one red/blue incidence cell")
     return parser.parse_args()
 
 

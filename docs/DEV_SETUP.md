@@ -70,6 +70,8 @@ make bicross-q6-cubes
 make bicross-q6-hit31-proof
 make bicross-q6-hit30-proof
 make bicross-q6-hit29-proof
+make bicross-extremal-shapes
+make bicross-no-cell-frontier
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -81,6 +83,14 @@ assumption split of the same formula.  The `hit31`, `hit30`, and `hit29` proof
 targets replay the staged cube proofs; `hit29` is the exact current frontier
 and uses all available cores by default.  Set `JOBS=4` or similar to cap CPU
 usage.
+
+`make bicross-extremal-shapes` samples exact Q4, Q5, and Q6 pair-hit frontier
+models and prints aggregate component-incidence signatures.  This is the
+fastest way to replay the current non-compute proof clue.
+
+`make bicross-no-cell-frontier` tests the incidence-cell restriction: Q4 should
+be UNSAT, Q5 should be SAT, and the Q6 quick cube pass is currently expected to
+finish UNKNOWN unless the frontier has moved.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

@@ -8,6 +8,8 @@
   routes to a proof.
 - `docs/BICROSS_LEMMA.md`: reduced ordinary-cube component theorem behind the
   one-connector lemma.
+- `docs/EXTREMAL_STAR.md`: current structural direction from Q4-Q6 pair-hit
+  frontier models.
 - `docs/REPRODUCING_RESULTS.md`: commands and expected outputs for the current
   computational evidence.
 
@@ -558,6 +560,57 @@ Latest experiment log:
   pair-hit objective: a full one-flip scan finds 0 improving edges and 152
   neutral edges.  A kicked/annealed search over 8 restarts and 15k flips per
   restart did not improve beyond 56 hit pairs.
+
+Extremal-star route:
+
+- Added `enc/bicross_extremal_analysis.py` to sample high pair-hit models and
+  aggregate component/incidence signatures.
+- Added `make bicross-extremal-shapes` to replay 100 exact frontier samples for
+  `Q_4`, `Q_5`, and `Q_6`.
+- Exact `Q_3` frontier: all 192 exact 2-hit models have profile
+  `both_good=2, one_good=2`; 144 have a single incidence cell containing both
+  bicross pairs, while 48 do not.  So "some incidence cell contains an
+  antipodal pair" is not a universal theorem.
+- `Q_4`, 100 exact 6-hit samples: all have profile
+  `both_good=2, one_good=5, both_bad=1`; all have exactly one incidence cell
+  containing exactly two antipodal pairs; all bicross pairs share one meet
+  vertex.
+- `Q_5`, first 100 unconstrained exact 12-hit samples: all have profile
+  `both_good=4, one_good=10, both_bad=2`; all have exactly one incidence cell
+  containing exactly four antipodal pairs; all bicross pairs share one meet
+  vertex.  This was a biased sample, not the whole frontier.
+- Added `--forbid-cell-pairs` to the pair-hit SAT encoding and cube helpers.
+  This explicitly forbids antipodal pairs inside one red/blue incidence cell.
+- With `--forbid-cell-pairs`, `Q_4` pair-hit `>=6` is UNSAT.  So the Q4
+  frontier really forces an incidence-cell antipodal pair.
+- With `--forbid-cell-pairs`, `Q_5` pair-hit `>=12` is SAT.  These no-cell
+  frontier models still have profile `both_good=4, one_good=10, both_bad=2`;
+  in 20 exact samples they all have one perfect inherited split with recursion
+  score `(14, 0, 0)` and uniform connectors.  Their bicross shape is also
+  stable: four bicross pairs, two meet vertices, each used four times, with no
+  same-meet pair.
+- `Q_6`, 100 exact 28-hit samples with symmetry breaks: all have profile
+  `both_good=4, one_good=19, both_bad=9`; all have bad weight histogram
+  `{1:2, 2:8, 3:12, 4:10, 5:4, 6:1}`; all have exactly one incidence cell
+  containing exactly four antipodal pairs; all bicross pairs share one meet
+  vertex.
+- In 20 Q6 frontier samples with inheritance summaries, all six splits have
+  `slice_only = 0`, but no split has perfect inheritance.
+- `Q_6`, pair-hit `>=28` with `--forbid-cell-pairs` is unresolved locally.
+  A direct `cadical195` run was stopped after several minutes.  Prefix cubing
+  proved 246/256 depth-8 cubes UNSAT at 50k conflicts, then 1 of the 10
+  survivors UNSAT at 500k conflicts, then 93/144 depth-12 descendants UNSAT at
+  100k conflicts.  No SAT model appeared; 51 depth-12 descendants remain
+  UNKNOWN.
+- In the Q6 sample, component sizes, incidence multiplicities, slice shapes,
+  and boundary profiles vary.  Three earlier canonical Q6 samples also landed
+  in three different automorphism/color-swap orbits.  The stable object is not
+  one coloring up to isomorphism; it is the incidence-cell star.
+- Candidate next lemma: if `Bad` comes close to hitting every antipodal pair,
+  then either the coloring has a perfect inherited split, or some red/blue
+  incidence cell `C_red_i intersect C_blue_j` contains an antipodal pair.  The
+  second branch immediately gives a bicross pair, because both endpoints lie in
+  the same red component and the same blue component.
 
 One-switch geodesic route:
 

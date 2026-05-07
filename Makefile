@@ -11,33 +11,83 @@ PY_SOURCES = \
 	enc/bicross_probe.py \
 	enc/bicross_cube_search.py \
 	enc/bicross_adaptive_cube_search.py \
+	enc/bicross_extremal_analysis.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
 	enc/sat_utils.py \
 	enc/test_component_chain_classifier.py \
 	enc/test_bicross_adaptive_cube_search.py \
 	enc/test_bicross_cube_search.py \
+	enc/test_bicross_extremal_analysis.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-extremal-shapes bicross-no-cell-frontier bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
 	$(PYTHON) enc/test_bicross_probe.py
 	$(PYTHON) enc/test_bicross_adaptive_cube_search.py
 	$(PYTHON) enc/test_bicross_cube_search.py
+	$(PYTHON) enc/test_bicross_extremal_analysis.py
 	$(PYTHON) enc/test_component_chain_classifier.py
 
 test-sat:
 	$(PYSAT_PYTHON) enc/test_bicross_probe.py
 	$(PYSAT_PYTHON) enc/test_bicross_adaptive_cube_search.py
 	$(PYSAT_PYTHON) enc/test_bicross_cube_search.py
+	$(PYSAT_PYTHON) enc/test_bicross_extremal_analysis.py
 	$(PYSAT_PYTHON) enc/test_component_chain_classifier.py
 
 test-all: test test-sat
 
 list-solvers:
 	$(PYSAT_PYTHON) enc/sat_portfolio.py --list-solvers
+
+bicross-extremal-shapes:
+	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
+		-m 4 \
+		--hit-bound 6 \
+		--models 100 \
+		--exact-hit \
+		--summary-only
+	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
+		-m 5 \
+		--hit-bound 12 \
+		--models 100 \
+		--exact-hit \
+		--summary-only
+	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
+		-m 6 \
+		--hit-bound 28 \
+		--models 100 \
+		--exact-hit \
+		--summary-only \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+
+bicross-no-cell-frontier:
+	$(PYSAT_PYTHON) enc/bicross_probe.py \
+		-m 4 \
+		--sat-pairs-hit-at-least 6 \
+		--forbid-cell-pairs
+	$(PYSAT_PYTHON) enc/bicross_probe.py \
+		-m 5 \
+		--sat-pairs-hit-at-least 12 \
+		--forbid-cell-pairs
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 28 \
+		--forbid-cell-pairs \
+		--cube-depth 8 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 50000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
 
 bicross-q6-frontier:
 	$(PYSAT_PYTHON) enc/sat_portfolio.py --timeout 300 -- \

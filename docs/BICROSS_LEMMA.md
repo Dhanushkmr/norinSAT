@@ -424,6 +424,58 @@ vertices hit at least `k` antipodal pairs?"
 With the zero-vertex symmetry breaks, the direct `Q_6` bicross negation has
 8,489 variables and 53,463 clauses.
 
+## Extremal-Star Refinement
+
+The next structural probe is `enc/bicross_extremal_analysis.py`.  It samples
+exact pair-hit frontier models and aggregates their component-incidence
+signatures.
+
+For each coloring, form incidence cells
+
+```text
+I_{a,b} = red_component_a intersect blue_component_b.
+```
+
+If an incidence cell contains both endpoints of an antipodal pair, then that
+pair is bicross immediately: the two vertices are in the same red component and
+the same blue component.
+
+Observed frontier data:
+
+- Exact Q3 frontier: all 192 exact 2-hit models were enumerated.  144 have a
+  single incidence cell containing both bicross pairs, but 48 have bicross
+  pairs without any antipodal pair in one incidence cell.
+- Q4 frontier: in 100 exact 6-hit samples, every model has one incidence cell
+  containing two antipodal pairs.  All bicross pairs share one meet vertex.
+- Q5 frontier: in the first 100 unconstrained exact 12-hit samples, every model
+  has one incidence cell containing four antipodal pairs, and all bicross pairs
+  share one meet vertex.  This is not the whole frontier.
+- Q5 with `--forbid-cell-pairs`: exact 12-hit models exist with no antipodal
+  pair inside one incidence cell.  In 20 such samples, every model has one
+  perfect inherited split with uniform connectors.  The bicross shape is a
+  stable two-pole shape: four bicross pairs, two meet vertices, each used four
+  times.
+- Q6 frontier: in 100 exact 28-hit samples with symmetry breaks, every model
+  has one incidence cell containing four antipodal pairs.  All bicross pairs
+  share one meet vertex.
+- Q6 with `--forbid-cell-pairs`: unresolved locally.  Depth-8 and depth-12
+  cube searches produced many UNSAT cubes and no SAT model, but still left hard
+  UNKNOWN descendants.
+
+The Q6 samples vary in component sizes, incidence multiplicities, slice shapes,
+and boundary profiles.  Earlier canonical checks also found different
+automorphism/color-swap orbits.  So the robust feature is not a single canonical
+coloring; it is the incidence-cell star.
+
+This suggests a stability/dichotomy version of the bicross lemma:
+
+> If `Bad = V \ G` hits sufficiently many antipodal pairs, then either the
+> coloring has a perfect inherited slice, or some incidence cell `I_{a,b}`
+> contains an antipodal pair.
+
+The plain incidence-cell statement is false, so the inherited-slice branch is
+not optional.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

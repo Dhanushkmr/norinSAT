@@ -261,3 +261,13 @@ The strongest current finite signal is the exact `Q_6` pair-hit frontier:
 `Bad = V \ G` can hit 28 of 32 antipodal pairs, but cannot hit 29.  So in
 `Q_6` every coloring has at least four bicross antipodal pairs, even before
 using the full antipodal-cube structure.
+
+The best current non-compute direction is the inherited-slice versus
+incidence-cell dichotomy recorded in `docs/EXTREMAL_STAR.md`.  One major
+frontier family has all surviving bicross pairs inside one red/blue
+component-incidence cell; if two antipodal vertices lie in the same red
+component and the same blue component, the bicross witness is immediate.
+However, Q5 also has exact-frontier models with no such cell pair.  Those
+models have a perfect inherited slice with uniform connectors, so the likely
+proof shape is a dichotomy: near-obstructions either reduce to a smaller cube
+or force an incidence-cell bicross pair.

@@ -19,6 +19,7 @@ from bicross_probe import (
     bad_vertices,
     bad_vertices_hit_every_antipodal_pair,
     bicross_witness,
+    cell_antipodal_pairs,
     encode_pair_hit_bound,
     literal_is_true,
 )
@@ -149,6 +150,7 @@ def print_sat_model_summary(args, model, edges, r):
         flush=True,
     )
     print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}", flush=True)
+    print(f"Cell antipodal pairs: {len(cell_antipodal_pairs(coloring, args.m))}", flush=True)
     print(f"Bicross witness: {bicross_witness(coloring, args.m)}", flush=True)
 
 
@@ -160,6 +162,7 @@ def run(args):
         sort_zero_edges=args.sort_zero_edges,
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
         partial_sym_break=args.partial_sym_break,
+        forbid_cell_pairs=args.forbid_cell_pairs,
     )
     solver.delete()
 
@@ -185,6 +188,8 @@ def run(args):
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
     print(f"Solver: {solver_name}", flush=True)
+    if args.forbid_cell_pairs:
+        print("Restriction: no antipodal pair may share both red and blue components", flush=True)
     print(f"Workers: {jobs} (available cores: {effective_cpu_count()})", flush=True)
     print(f"Cube depth: {args.cube_depth}", flush=True)
     print(f"Cubes selected: {len(indexed_cubes)}/{len(cubes)}", flush=True)
@@ -287,6 +292,7 @@ def parse_args():
     parser.add_argument("--sort-zero-edges", action="store_true", help="Sort colors incident to 00...0")
     parser.add_argument("--zero-red-degree-at-most-half", action="store_true", help="Bound red degree at 00...0")
     parser.add_argument("--partial-sym-break", type=int, default=0, help="Coordinate/bit-flip lex comparison cap")
+    parser.add_argument("--forbid-cell-pairs", action="store_true", help="Forbid antipodal pairs inside one red/blue incidence cell")
     return parser.parse_args()
 
 

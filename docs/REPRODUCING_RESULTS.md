@@ -339,6 +339,51 @@ uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
 
 Expected behavior: `SAT: True` and `Encoded hit pairs: 28`.
 
+To replay the current extremal-shape samples:
+
+```bash
+make bicross-extremal-shapes
+```
+
+Expected high-level behavior:
+
+- `Q_4`, 100 exact 6-hit samples: `cell_antipodal_pairs` has one distinct
+  signature, `pair_count=2`, `cells_with_pairs=1`; `bicross_shape` has one
+  distinct signature with one common meet vertex.
+- `Q_5`, 100 exact 12-hit samples: `cell_antipodal_pairs` has one distinct
+  signature, `pair_count=4`, `cells_with_pairs=1`; `bicross_shape` has one
+  distinct signature with one common meet vertex.  This is a representative
+  sample of one frontier family, not an exhaustive classification.
+- `Q_6`, 100 exact 28-hit samples: `cell_antipodal_pairs` has one distinct
+  signature, `pair_count=4`, `cells_with_pairs=1`; `bicross_shape` has one
+  distinct signature with one common meet vertex.
+
+The incidence-cell restriction can be tested directly:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 4 \
+  --sat-pairs-hit-at-least 6 \
+  --forbid-cell-pairs \
+  --solver cadical195
+
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 5 \
+  --sat-pairs-hit-at-least 12 \
+  --forbid-cell-pairs \
+  --solver cadical195
+```
+
+Expected behavior:
+
+```text
+Q_4, pair-hit >= 6, no cell pairs: SAT: False
+Q_5, pair-hit >= 12, no cell pairs: SAT: True
+```
+
+The Q5 model should report `Cell antipodal pairs: 0` and the same pair profile
+as the ordinary 12-hit frontier: `both_good=4, one_good=10, both_bad=2`.
+
 Current `Q_7` full-obstruction frontier:
 
 ```bash

@@ -8,6 +8,7 @@ from bicross_probe import (
     bad_vertices,
     bad_vertices_hit_every_antipodal_pair,
     bicross_witness,
+    cell_antipodal_pairs,
     construct_bad_antipodal_labeling,
     doubled_coloring,
     good_vertices,
@@ -86,6 +87,12 @@ class BicrossProbeTests(unittest.TestCase):
             self.assertTrue(summary.identical_slices)
             self.assertTrue(summary.uniform_connectors)
 
+    def test_cell_antipodal_pairs_for_monochromatic_q3(self):
+        _, _, edges = all_edges(3)
+        coloring = arbitrary_coloring_from_bits(edges, [0] * len(edges))
+
+        self.assertEqual(cell_antipodal_pairs(coloring, 3), ())
+
     def test_doubling_preserves_bad_vertices_by_copy(self):
         _, _, edges = all_edges(2)
         for bits in itertools.product((0, 1), repeat=len(edges)):
@@ -158,6 +165,27 @@ class OptionalSatBicrossTests(unittest.TestCase):
                 )
             finally:
                 solver.delete()
+
+    def test_cell_pair_restriction_separates_q3_q4_frontiers(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        q3_solver, *_ = encode_pair_hit_bound(3, hit_bound=2, forbid_cell_pairs=True)
+        try:
+            self.assertTrue(q3_solver.solve(), "Q_3 has exact-frontier colorings with no cell antipodal pair")
+        finally:
+            q3_solver.delete()
+
+        q4_solver, *_ = encode_pair_hit_bound(4, hit_bound=6, forbid_cell_pairs=True)
+        try:
+            self.assertFalse(
+                q4_solver.solve(),
+                "Q_4 exact-frontier colorings should force a cell antipodal pair",
+            )
+        finally:
+            q4_solver.delete()
 
 
 if __name__ == "__main__":

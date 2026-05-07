@@ -210,6 +210,22 @@ def bad_vertices_hit_every_antipodal_pair(coloring, m):
     return profile["both_good"] == 0
 
 
+def cell_antipodal_pairs(coloring, m):
+    """Antipodal pairs whose endpoints share both red and blue components."""
+    vertices, _ = build_hypercube_graph(m)
+    components = component_data(coloring, m)
+    red = components[RED]
+    blue = components[BLUE]
+    pairs = []
+
+    for start in antipodal_vertex_representatives(vertices):
+        end = anti(start)
+        if red[start] == red[end] and blue[start] == blue[end]:
+            pairs.append((start, end))
+
+    return tuple(pairs)
+
+
 def slice_coloring(coloring, m, dimension, side):
     vertices, graph = build_hypercube_graph(m)
     sliced = {}
@@ -1006,6 +1022,7 @@ def encode_pair_hit_bound(
     sort_zero_edges=False,
     zero_red_degree_at_most_half=False,
     partial_sym_break=0,
+    forbid_cell_pairs=False,
 ):
     try:
         from pysat.card import CardEnc, EncType
@@ -1057,6 +1074,11 @@ def encode_pair_hit_bound(
     for start in representatives:
         end = anti(start)
         clauses.append([-pair_hit(start), bad(start), bad(end)])
+
+    if forbid_cell_pairs:
+        for start in representatives:
+            end = anti(start)
+            clauses.append([-reachable(RED, start, end), -reachable(BLUE, start, end)])
 
     cardinality = CardEnc.atleast(
         lits=[pair_hit(v) for v in representatives],
@@ -1204,6 +1226,7 @@ def solve_pair_hit_bound(args):
         sort_zero_edges=args.sort_zero_edges,
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
         partial_sym_break=args.partial_sym_break,
+        forbid_cell_pairs=args.forbid_cell_pairs,
     )
     vertices, _, edges = all_edges(args.m)
     representatives = list(antipodal_vertex_representatives(vertices))
@@ -1215,6 +1238,8 @@ def solve_pair_hit_bound(args):
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
     print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
+    if args.forbid_cell_pairs:
+        print("Restriction: no antipodal pair may share both red and blue components", flush=True)
     if args.sort_zero_edges:
         print("Symmetry: incident colors at 00...0 sorted", flush=True)
     if args.zero_red_degree_at_most_half:
@@ -1249,6 +1274,7 @@ def solve_pair_hit_bound(args):
             f"both_bad={pair_profile['both_bad']}"
         )
         print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}")
+        print(f"Cell antipodal pairs: {len(cell_antipodal_pairs(coloring, args.m))}")
         print("Actual bad vertex list: " + ", ".join(vertex_name(v) for v in actual_bad))
         print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
         if args.show_examples:
@@ -1397,6 +1423,11 @@ def parse_args():
         type=int,
         default=0,
         help="In pair-hit SAT mode, add coordinate/bit-flip lex symmetry breaking with this comparison cap",
+    )
+    parser.add_argument(
+        "--forbid-cell-pairs",
+        action="store_true",
+        help="In pair-hit SAT mode, forbid antipodal pairs inside one red/blue incidence cell",
     )
     parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model edge list")
     parser.add_argument("--show-components", action="store_true", help="Print red/blue components for shown examples")
