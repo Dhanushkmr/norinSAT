@@ -21,7 +21,9 @@ from bicross_probe import (
     bicross_witness,
     cell_antipodal_pairs,
     encode_pair_hit_bound,
+    format_dimension_list,
     literal_is_true,
+    perfect_inherited_splits,
 )
 from induction_probe import all_edges
 from sat_utils import best_pysat_solver_name, effective_cpu_count, make_pysat_solver, solver_help
@@ -89,7 +91,22 @@ def batches_for_cubes(indexed, jobs, batch_size):
     return [bucket for bucket in buckets if bucket]
 
 
-def solve_cube_chunk(worker_id, clauses, cubes, solver_name, conflict_budget):
+def model_to_coloring_from_edge_literals(model, edge_literals):
+    model_set = set(model)
+    return {edge: literal_is_true(model_set, literal) for edge, literal in edge_literals}
+
+
+def solve_cube_chunk(
+    worker_id,
+    clauses,
+    cubes,
+    solver_name,
+    conflict_budget,
+    edge_literals=None,
+    m=None,
+    forbid_perfect_inherited_splits=False,
+    postcheck_limit_per_cube=0,
+):
     solver, actual_solver = make_pysat_solver(solver_name)
     for clause in clauses:
         solver.add_clause(clause)
@@ -97,28 +114,48 @@ def solve_cube_chunk(worker_id, clauses, cubes, solver_name, conflict_budget):
     counts = Counter()
     first_sat = None
     unknown_indexes = []
+    postcheck_rejections = 0
     started = time.monotonic()
 
     for cube_index, cube in cubes:
-        if conflict_budget:
-            solver.conf_budget(conflict_budget)
-            result = solver.solve_limited(assumptions=list(cube))
-        else:
-            result = solver.solve(assumptions=list(cube))
+        rejected_for_cube = 0
+        while True:
+            if conflict_budget:
+                solver.conf_budget(conflict_budget)
+                result = solver.solve_limited(assumptions=list(cube))
+            else:
+                result = solver.solve(assumptions=list(cube))
 
-        if result is True:
-            counts["sat"] += 1
-            first_sat = {
-                "cube_index": cube_index,
-                "cube": cube,
-                "model": solver.get_model(),
-            }
+            if result is True:
+                model = solver.get_model()
+                if forbid_perfect_inherited_splits:
+                    coloring = model_to_coloring_from_edge_literals(model, edge_literals)
+                    if perfect_inherited_splits(coloring, m):
+                        postcheck_rejections += 1
+                        rejected_for_cube += 1
+                        if postcheck_limit_per_cube and rejected_for_cube >= postcheck_limit_per_cube:
+                            counts["unknown"] += 1
+                            unknown_indexes.append(cube_index)
+                            break
+                        solver.add_clause([(-literal if coloring[edge] else literal) for edge, literal in edge_literals])
+                        continue
+
+                counts["sat"] += 1
+                first_sat = {
+                    "cube_index": cube_index,
+                    "cube": cube,
+                    "model": model,
+                }
+                break
+            if result is False:
+                counts["unsat"] += 1
+            else:
+                counts["unknown"] += 1
+                unknown_indexes.append(cube_index)
             break
-        if result is False:
-            counts["unsat"] += 1
-        else:
-            counts["unknown"] += 1
-            unknown_indexes.append(cube_index)
+
+        if first_sat is not None:
+            break
 
     solver.delete()
     return {
@@ -127,6 +164,7 @@ def solve_cube_chunk(worker_id, clauses, cubes, solver_name, conflict_budget):
         "counts": dict(counts),
         "first_sat": first_sat,
         "unknown_indexes": unknown_indexes,
+        "postcheck_rejections": postcheck_rejections,
         "elapsed": time.monotonic() - started,
     }
 
@@ -151,6 +189,7 @@ def print_sat_model_summary(args, model, edges, r):
     )
     print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}", flush=True)
     print(f"Cell antipodal pairs: {len(cell_antipodal_pairs(coloring, args.m))}", flush=True)
+    print(f"Perfect inherited splits: {format_dimension_list(perfect_inherited_splits(coloring, args.m))}", flush=True)
     print(f"Bicross witness: {bicross_witness(coloring, args.m)}", flush=True)
 
 
@@ -163,12 +202,15 @@ def run(args):
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
         partial_sym_break=args.partial_sym_break,
         forbid_cell_pairs=args.forbid_cell_pairs,
+        complete_bad=args.complete_bad,
+        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits,
     )
     solver.delete()
 
     _, _, edges = all_edges(args.m)
     cube_edges = choose_cube_edges(edges, args.cube_depth, args.cube_mode, args.seed, offset=args.cube_offset)
     cube_literals = tuple(r(*edge) for edge in cube_edges)
+    edge_literals = tuple((edge, r(*edge)) for edge in edges)
     cubes = list(build_cubes(cube_literals))
     if args.shuffle_cubes:
         rng = random.Random(args.seed)
@@ -190,6 +232,10 @@ def run(args):
     print(f"Solver: {solver_name}", flush=True)
     if args.forbid_cell_pairs:
         print("Restriction: no antipodal pair may share both red and blue components", flush=True)
+    if args.complete_bad or args.forbid_perfect_inherited_splits:
+        print("Restriction: complete bad variables using SAT reachability meets", flush=True)
+    if args.forbid_perfect_inherited_splits:
+        print("Restriction: reject concrete models with perfect inherited splits", flush=True)
     print(f"Workers: {jobs} (available cores: {effective_cpu_count()})", flush=True)
     print(f"Cube depth: {args.cube_depth}", flush=True)
     print(f"Cubes selected: {len(indexed_cubes)}/{len(cubes)}", flush=True)
@@ -203,7 +249,18 @@ def run(args):
     unknown_indexes = []
     with ProcessPoolExecutor(max_workers=jobs) as executor:
         futures = [
-            executor.submit(solve_cube_chunk, worker_id, clauses, batch, args.solver, args.conflict_budget)
+            executor.submit(
+                solve_cube_chunk,
+                worker_id,
+                clauses,
+                batch,
+                args.solver,
+                args.conflict_budget,
+                edge_literals,
+                args.m,
+                args.forbid_perfect_inherited_splits,
+                args.postcheck_limit_per_cube,
+            )
             for worker_id, batch in enumerate(batches)
         ]
         for future in as_completed(futures):
@@ -212,7 +269,8 @@ def run(args):
             unknown_indexes.extend(result["unknown_indexes"])
             print(
                 f"batch={result['worker_id']} solver={result['solver']} "
-                f"counts={result['counts']} elapsed={result['elapsed']:.2f}s",
+                f"counts={result['counts']} postcheck_rejections={result['postcheck_rejections']} "
+                f"elapsed={result['elapsed']:.2f}s",
                 flush=True,
             )
             if result["first_sat"] is not None and first_sat is None:
@@ -293,6 +351,22 @@ def parse_args():
     parser.add_argument("--zero-red-degree-at-most-half", action="store_true", help="Bound red degree at 00...0")
     parser.add_argument("--partial-sym-break", type=int, default=0, help="Coordinate/bit-flip lex comparison cap")
     parser.add_argument("--forbid-cell-pairs", action="store_true", help="Forbid antipodal pairs inside one red/blue incidence cell")
+    parser.add_argument(
+        "--complete-bad",
+        action="store_true",
+        help="Complete bad variables using SAT reachability meets before cubing",
+    )
+    parser.add_argument(
+        "--forbid-perfect-inherited-splits",
+        action="store_true",
+        help="Reject concrete SAT cube models with a perfect inherited split; implies --complete-bad in the encoder",
+    )
+    parser.add_argument(
+        "--postcheck-limit-per-cube",
+        type=int,
+        default=1,
+        help="Maximum perfect-split SAT models to block inside one cube before marking it UNKNOWN; 0 means no limit",
+    )
     return parser.parse_args()
 
 

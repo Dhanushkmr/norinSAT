@@ -268,6 +268,14 @@ frontier family has all surviving bicross pairs inside one red/blue
 component-incidence cell; if two antipodal vertices lie in the same red
 component and the same blue component, the bicross witness is immediate.
 However, Q5 also has exact-frontier models with no such cell pair.  Those
-models have a perfect inherited slice with uniform connectors, so the likely
-proof shape is a dichotomy: near-obstructions either reduce to a smaller cube
-or force an incidence-cell bicross pair.
+models have a perfect inherited slice.  Larger Q5 samples show that uniform
+connectors are not forced, so the likely proof shape is a cleaner dichotomy:
+near-obstructions either reduce to a smaller cube through perfect bad-set
+inheritance or force an incidence-cell bicross pair.
+
+The current falsification target is the conjunction `high pair-hit + no cell
+antipodal pair + no perfect inherited split`.  It is UNSAT for the Q4 frontier,
+has produced no genuine Q5 counterexample after 5,000 post-checked SAT models,
+and has no Q6 SAT counter-signal in the current bounded cube search.  This is
+not a proof, but it is now the most focused experimental statement to turn
+into one.

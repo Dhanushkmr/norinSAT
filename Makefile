@@ -21,7 +21,7 @@ PY_SOURCES = \
 	enc/test_bicross_extremal_analysis.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-extremal-shapes bicross-no-cell-frontier bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -88,6 +88,35 @@ bicross-no-cell-frontier:
 		--sort-zero-edges \
 		--zero-red-degree-at-most-half \
 		--partial-sym-break 20
+
+bicross-dichotomy-checks:
+	$(PYSAT_PYTHON) enc/bicross_probe.py \
+		-m 4 \
+		--sat-pairs-hit-at-least 6 \
+		--forbid-cell-pairs \
+		--forbid-perfect-inherited-splits
+	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
+		-m 5 \
+		--hit-bound 12 \
+		--models 100 \
+		--exact-hit \
+		--forbid-cell-pairs \
+		--summary-only
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 28 \
+		--forbid-cell-pairs \
+		--forbid-perfect-inherited-splits \
+		--cube-depth 6 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 50000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--postcheck-limit-per-cube 5
 
 bicross-q6-frontier:
 	$(PYSAT_PYTHON) enc/sat_portfolio.py --timeout 300 -- \

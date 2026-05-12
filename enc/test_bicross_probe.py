@@ -17,9 +17,11 @@ from bicross_probe import (
     fixed_slice_witness,
     iter_antipodal_labelings,
     monotone_geodesic_vertices,
+    perfect_inherited_splits,
     random_edge_coloring,
     slice_recursion_score,
     slice_summaries,
+    uniform_perfect_inherited_splits,
     validate_bad_labeling,
 )
 from induction_probe import all_edges
@@ -109,6 +111,15 @@ class BicrossProbeTests(unittest.TestCase):
                     self.assertEqual(doubled_profile["one_good"], 2 * original_profile["one_good"])
                     self.assertEqual(doubled_profile["both_bad"], 2 * original_profile["both_bad"])
 
+    def test_doubling_has_expected_perfect_inherited_split(self):
+        _, _, edges = all_edges(2)
+        coloring = arbitrary_coloring_from_bits(edges, [0, 1, 1, 0])
+
+        for dimension in range(3):
+            doubled = doubled_coloring(coloring, 2, connector_color=False, dimension=dimension)
+            self.assertIn(dimension, perfect_inherited_splits(doubled, 3))
+            self.assertIn(dimension, uniform_perfect_inherited_splits(doubled, 3))
+
 
 class OptionalSatBicrossTests(unittest.TestCase):
     def test_fixed_slice_negation_unsat_for_q3_q4(self):
@@ -186,6 +197,18 @@ class OptionalSatBicrossTests(unittest.TestCase):
             )
         finally:
             q4_solver.delete()
+
+    def test_forbid_perfect_inherited_splits_encoding_smoke(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        solver, *_ = encode_pair_hit_bound(3, hit_bound=4, forbid_perfect_inherited_splits=True)
+        try:
+            self.assertFalse(solver.solve(), "Q_3 cannot hit all antipodal pairs, with or without slice restrictions")
+        finally:
+            solver.delete()
 
 
 if __name__ == "__main__":

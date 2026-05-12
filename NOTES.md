@@ -612,6 +612,34 @@ Extremal-star route:
   second branch immediately gives a bicross pair, because both endpoints lie in
   the same red component and the same blue component.
 
+Dichotomy falsification pass, 2026-05-13:
+
+- Added `perfect_inherited_splits` helpers and a pair-hit SAT option
+  `--forbid-perfect-inherited-splits`.  This option completes the symbolic bad
+  variables with reachability-meet clauses, then concretely post-checks and
+  blocks SAT colorings whose actual structure still has a perfect inherited
+  split.  The post-check is essential because the reachability variables are
+  monotone and can otherwise spoof no-perfect constraints.
+- Added the same restriction to `enc/bicross_cube_search.py` and
+  `enc/bicross_adaptive_cube_search.py`, with per-cube post-check blocking.
+- `Q_4`, hit `>=6`, `--forbid-cell-pairs`, and
+  `--forbid-perfect-inherited-splits`: UNSAT.
+- `Q_5`, hit `>=12`, no cell pairs, no perfect inherited split: a 5,000-model
+  post-check did not find a genuine no-perfect example.  Every concrete model
+  encountered still had a perfect inherited split.  A separate 500-model exact
+  no-cell frontier sample also found 500/500 with exactly one perfect split.
+  Important correction: uniform connectors are not forced; perfect inheritance
+  is the invariant, not uniformity.
+- `Q_6`, hit `>=28`, no cell pairs, no perfect inherited split: direct solving
+  is too brittle locally.  Prefix cubing at depth 6 proved 60/64 cubes UNSAT at
+  50k conflicts, leaving `0,1,3,7`; descending those to depth 10 proved 43/64
+  descendants UNSAT at 50k conflicts, leaving 21 UNKNOWN.  No SAT
+  counter-signal appeared.
+- The proof target sharpened to an inherited-split/incidence-cell dichotomy.
+  The next mathematical step is to prove that a high pair-hit, no-cell coloring
+  must have at least one perfect inherited split, then use that split as the
+  induction interface.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and

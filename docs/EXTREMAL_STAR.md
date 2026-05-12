@@ -72,11 +72,14 @@ However, this sample was biased toward one frontier family.  Adding the SAT
 restriction `--forbid-cell-pairs` finds exact 12-hit Q5 models with no
 incidence-cell antipodal pair.
 
-Q5, 20 exact 12-hit models with no incidence-cell antipodal pair:
+Q5, exact 12-hit models with no incidence-cell antipodal pair:
 
 - Pair profile is still `both_good=4, one_good=10, both_bad=2`.
-- Every sampled model has a perfect inherited slice: one coordinate split has
-  recursion score `(14, 0, 0)` and uniform connectors.
+- In the first 500 sampled no-cell models, every model has a perfect inherited
+  slice: at least one coordinate split has recursion score `(14, 0, 0)`.
+- Uniform connectors are not forced.  Earlier 20-model samples landed in the
+  uniform subfamily, but the 500-model run includes many non-uniform perfect
+  inherited splits.
 - The bicross shape is constant but different: four bicross pairs, two meet
   vertices, each meet vertex used four times, and no bicross pair has the same
   red/blue meet vertex.
@@ -129,9 +132,42 @@ The better current reading is a dichotomy:
 > with an antipodal pair.
 
 For Q5, the no-cell frontier family is inherited from Q4 through a perfect
-uniform-connector split.  For the sampled Q6 star family, no perfect inherited
-split appears.  This is the most promising induction interface currently on
-the table.
+split.  The connector colors need not be uniform.  For the sampled Q6 star
+family, no perfect inherited split appears.  This is the most promising
+induction interface currently on the table.
+
+## Dichotomy Falsification Checks
+
+The first direct falsification target is:
+
+> high pair-hit + no incidence-cell antipodal pair + no perfect inherited split.
+
+The SAT encoding now has `--forbid-perfect-inherited-splits`.  Because the
+reachability variables are monotone, SAT models are post-checked against the
+concrete coloring and blocked if they only spoof the symbolic no-perfect
+condition.
+
+Current results:
+
+- `Q_4`, hit `>=6`, no cell pairs, no perfect inherited split: UNSAT.
+- `Q_5`, hit `>=12`, no cell pairs, no perfect inherited split:
+  5,000 concrete SAT colorings were blocked by post-check; every one still had
+  a perfect inherited split.  This is not an exhaustive proof, but it strongly
+  supports the inherited branch.
+- Independent `Q_5` extremal sampling with `--forbid-cell-pairs` found
+  500/500 exact 12-hit models with exactly one perfect inherited split.
+- `Q_6`, hit `>=28`, no cell pairs, no perfect inherited split:
+  direct solving builds a 50,791-variable, 246,229-clause formula and is too
+  brittle locally.  A depth-6 prefix cube pass at 50k conflicts proved 60/64
+  cubes UNSAT and left `0,1,3,7` UNKNOWN.  Descending those to depth 10 at 50k
+  conflicts proved 43/64 descendants UNSAT and left 21 UNKNOWN.  No SAT
+  counter-signal appeared.
+
+This strengthens the current working lemma:
+
+> Near the pair-hit frontier, no-cell examples appear to be inherited from a
+> lower-dimensional frontier.  The incidence-cell branch and inherited-split
+> branch are the right two objects; uniform connector color is noise.
 
 ## What Worked
 

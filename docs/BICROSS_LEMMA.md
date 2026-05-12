@@ -476,6 +476,13 @@ This suggests a stability/dichotomy version of the bicross lemma:
 The plain incidence-cell statement is false, so the inherited-slice branch is
 not optional.
 
+The latest falsification checks support the branch split more sharply.  In
+`Q_5`, 500 exact no-cell frontier samples all have a perfect inherited split,
+but many do not have uniform connector colors.  The invariant is bad-set
+inheritance, not connector uniformity.  A bounded `Q_6` no-cell/no-perfect cube
+search currently has many UNSAT cubes and no SAT counter-signal, with UNKNOWN
+descendants still remaining.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

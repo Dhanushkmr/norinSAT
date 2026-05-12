@@ -81,6 +81,10 @@ def arbitrary_coloring_from_bits(edges, bits):
     return {edge: bool(bit) for edge, bit in zip(edges, bits)}
 
 
+def coloring_blocking_clause(coloring, r):
+    return [(-r(*edge) if color else r(*edge)) for edge, color in coloring.items()]
+
+
 def random_edge_coloring(edges, rng):
     return {edge: bool(rng.randrange(2)) for edge in edges}
 
@@ -378,6 +382,24 @@ def slice_summaries(coloring, m):
     return tuple(slice_summary(coloring, m, dimension) for dimension in range(m))
 
 
+def perfect_inherited_splits(coloring, m):
+    """Coordinates where full bad vertices match slice bad vertices exactly."""
+    return tuple(
+        summary.dimension
+        for summary in slice_summaries(coloring, m)
+        if slice_recursion_score(summary)[1:] == (0, 0)
+    )
+
+
+def uniform_perfect_inherited_splits(coloring, m):
+    """Perfect inherited coordinates whose connector edges all have one color."""
+    return tuple(
+        summary.dimension
+        for summary in slice_summaries(coloring, m)
+        if summary.uniform_connectors and slice_recursion_score(summary)[1:] == (0, 0)
+    )
+
+
 def path_for_coordinate_order(start, order):
     current = start
     path = [current]
@@ -563,6 +585,10 @@ def format_bicross_witness(witness):
 
 def format_path(path):
     return " -> ".join(vertex_name(v) for v in path)
+
+
+def format_dimension_list(dimensions):
+    return ", ".join(map(str, dimensions)) if dimensions else "none"
 
 
 def format_fixed_slice_witness(witness):
@@ -1015,6 +1041,118 @@ def add_pair_hit_symmetry_breaking(
             lex_smaller_eq(clauses, vpool, original, transformed, maxcomparisons=partial_sym_break)
 
 
+def add_full_bad_clauses(clauses, vertices, reachable, bad):
+    for start in vertices:
+        end = anti(start)
+        for intersection in vertices:
+            clauses.append(
+                [
+                    -bad(start),
+                    -reachable(RED, start, intersection),
+                    -reachable(BLUE, end, intersection),
+                ]
+            )
+
+
+def add_full_bad_completion_clauses(clauses, vertices, reachable, bad, vpool):
+    """Force unmarked vertices to have a red-blue meet in the SAT reachability relation.
+
+    The reachability relation is intentionally monotone: every genuinely
+    reachable vertex must be marked reachable, but SAT models may mark extra
+    vertices reachable.  Therefore these clauses are mainly useful for UNSAT
+    falsification of structural lemmas.  Any SAT model is still post-checked
+    against the concrete coloring.
+    """
+
+    def full_meet(start, intersection):
+        return vpool.id(("full_meet", start, intersection))
+
+    for start in vertices:
+        end = anti(start)
+        meet_lits = []
+        for intersection in vertices:
+            meet_lit = full_meet(start, intersection)
+            red_reachable = reachable(RED, start, intersection)
+            blue_reachable = reachable(BLUE, end, intersection)
+            clauses.append([-meet_lit, red_reachable])
+            clauses.append([-meet_lit, blue_reachable])
+            clauses.append([-red_reachable, -blue_reachable, meet_lit])
+            clauses.append([-bad(start), -meet_lit])
+            meet_lits.append(meet_lit)
+
+        clauses.append([bad(start)] + meet_lits)
+
+
+def add_forbid_perfect_inherited_split_clauses(clauses, m, r, bad, vpool):
+    if m < 2:
+        raise ValueError("Perfect inherited split constraints require m >= 2.")
+
+    small_vertices, _, small_edges = all_edges(m - 1)
+
+    def slice_reachable(target_color, dimension, side, root, v):
+        return vpool.id(("slice_reachable", target_color, dimension, side, root, v))
+
+    def slice_meet(dimension, side, start, intersection):
+        return vpool.id(("slice_meet", dimension, side, start, intersection))
+
+    def slice_bad_var(dimension, side, v):
+        return vpool.id(("slice_bad", dimension, side, v))
+
+    def mismatch(dimension, side, v):
+        return vpool.id(("slice_bad_mismatch", dimension, side, v))
+
+    for dimension in range(m):
+        for side in (0, 1):
+            for target_color in (BLUE, RED):
+                for root in small_vertices:
+                    clauses.append([slice_reachable(target_color, dimension, side, root, root)])
+                    for u, v in small_edges:
+                        edge_lit = r(
+                            insert_coordinate(u, dimension, side),
+                            insert_coordinate(v, dimension, side),
+                        )
+                        u_reachable = slice_reachable(target_color, dimension, side, root, u)
+                        v_reachable = slice_reachable(target_color, dimension, side, root, v)
+                        if target_color:
+                            clauses.append([-u_reachable, -edge_lit, v_reachable])
+                            clauses.append([-v_reachable, -edge_lit, u_reachable])
+                        else:
+                            clauses.append([-u_reachable, edge_lit, v_reachable])
+                            clauses.append([-v_reachable, edge_lit, u_reachable])
+
+            for start in small_vertices:
+                end = anti(start)
+                meet_lits = []
+                slice_bad_lit = slice_bad_var(dimension, side, start)
+                for intersection in small_vertices:
+                    meet_lit = slice_meet(dimension, side, start, intersection)
+                    red_reachable = slice_reachable(RED, dimension, side, start, intersection)
+                    blue_reachable = slice_reachable(BLUE, dimension, side, end, intersection)
+                    clauses.append([-meet_lit, red_reachable])
+                    clauses.append([-meet_lit, blue_reachable])
+                    clauses.append([-red_reachable, -blue_reachable, meet_lit])
+                    clauses.append([-slice_bad_lit, -meet_lit])
+                    meet_lits.append(meet_lit)
+
+                clauses.append([slice_bad_lit] + meet_lits)
+
+    for dimension in range(m):
+        mismatch_lits = []
+        for side in (0, 1):
+            for small_vertex in small_vertices:
+                full_vertex = insert_coordinate(small_vertex, dimension, side)
+                full_bad_lit = bad(full_vertex)
+                slice_bad_lit = slice_bad_var(dimension, side, small_vertex)
+                mismatch_lit = mismatch(dimension, side, small_vertex)
+                clauses.append([-mismatch_lit, full_bad_lit, slice_bad_lit])
+                clauses.append([-mismatch_lit, -full_bad_lit, -slice_bad_lit])
+                clauses.append([-full_bad_lit, slice_bad_lit, mismatch_lit])
+                clauses.append([full_bad_lit, -slice_bad_lit, mismatch_lit])
+                mismatch_lits.append(mismatch_lit)
+
+        clauses.append(mismatch_lits)
+
+
 def encode_pair_hit_bound(
     m,
     hit_bound,
@@ -1023,6 +1161,8 @@ def encode_pair_hit_bound(
     zero_red_degree_at_most_half=False,
     partial_sym_break=0,
     forbid_cell_pairs=False,
+    complete_bad=False,
+    forbid_perfect_inherited_splits=False,
 ):
     try:
         from pysat.card import CardEnc, EncType
@@ -1047,6 +1187,7 @@ def encode_pair_hit_bound(
         return vpool.id(("pair_hit", v))
 
     clauses = []
+    complete_bad = complete_bad or forbid_perfect_inherited_splits
 
     for target_color in (BLUE, RED):
         for root in vertices:
@@ -1060,16 +1201,10 @@ def encode_pair_hit_bound(
                     clauses.append([-reachable(target_color, root, u), edge_lit, reachable(target_color, root, v)])
                     clauses.append([-reachable(target_color, root, v), edge_lit, reachable(target_color, root, u)])
 
-    for start in vertices:
-        end = anti(start)
-        for intersection in vertices:
-            clauses.append(
-                [
-                    -bad(start),
-                    -reachable(RED, start, intersection),
-                    -reachable(BLUE, end, intersection),
-                ]
-            )
+    add_full_bad_clauses(clauses, vertices, reachable, bad)
+
+    if complete_bad:
+        add_full_bad_completion_clauses(clauses, vertices, reachable, bad, vpool)
 
     for start in representatives:
         end = anti(start)
@@ -1079,6 +1214,9 @@ def encode_pair_hit_bound(
         for start in representatives:
             end = anti(start)
             clauses.append([-reachable(RED, start, end), -reachable(BLUE, start, end)])
+
+    if forbid_perfect_inherited_splits:
+        add_forbid_perfect_inherited_split_clauses(clauses, m, r, bad, vpool)
 
     cardinality = CardEnc.atleast(
         lits=[pair_hit(v) for v in representatives],
@@ -1227,6 +1365,8 @@ def solve_pair_hit_bound(args):
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
         partial_sym_break=args.partial_sym_break,
         forbid_cell_pairs=args.forbid_cell_pairs,
+        complete_bad=args.complete_bad,
+        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits,
     )
     vertices, _, edges = all_edges(args.m)
     representatives = list(antipodal_vertex_representatives(vertices))
@@ -1240,6 +1380,10 @@ def solve_pair_hit_bound(args):
     print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
     if args.forbid_cell_pairs:
         print("Restriction: no antipodal pair may share both red and blue components", flush=True)
+    if args.complete_bad or args.forbid_perfect_inherited_splits:
+        print("Restriction: complete bad variables using SAT reachability meets", flush=True)
+    if args.forbid_perfect_inherited_splits:
+        print("Restriction: every coordinate split must have a full/slice bad-set mismatch", flush=True)
     if args.sort_zero_edges:
         print("Symmetry: incident colors at 00...0 sorted", flush=True)
     if args.zero_red_degree_at_most_half:
@@ -1253,16 +1397,47 @@ def solve_pair_hit_bound(args):
         solver.delete()
         return
 
-    result = solver.solve()
-    print(f"SAT: {result}", flush=True)
+    attempts = 0
+    result = False
+    rejected_by_postcheck = 0
 
-    if result:
+    while attempts < args.postcheck_limit:
+        result = solver.solve()
+        if not result:
+            break
+
+        attempts += 1
         model_set = set(solver.get_model())
         coloring = {edge: literal_is_true(model_set, r(*edge)) for edge in edges}
         actual_bad = bad_vertices(coloring, args.m)
         pair_profile = antipodal_pair_profile(coloring, args.m)
         encoded_bad = tuple(v for v in vertices if literal_is_true(model_set, bad(v)))
         encoded_hits = tuple(v for v in representatives if literal_is_true(model_set, pair_hit(v)))
+        perfect_splits = perfect_inherited_splits(coloring, args.m)
+        uniform_perfect_splits = uniform_perfect_inherited_splits(coloring, args.m)
+        postcheck_errors = []
+        if args.forbid_perfect_inherited_splits and perfect_splits:
+            postcheck_errors.append(f"actual perfect inherited splits={format_dimension_list(perfect_splits)}")
+
+        if postcheck_errors and attempts < args.postcheck_limit:
+            rejected_by_postcheck += 1
+            if attempts <= args.postcheck_report_first or (
+                args.postcheck_report_every and attempts % args.postcheck_report_every == 0
+            ):
+                print(
+                    f"Postcheck rejected model {attempts}: " + "; ".join(postcheck_errors),
+                    flush=True,
+                )
+            solver.add_clause(coloring_blocking_clause(coloring, r))
+            continue
+
+        print(f"SAT: {result}", flush=True)
+        if rejected_by_postcheck:
+            print(f"Postcheck rejected colorings: {rejected_by_postcheck}", flush=True)
+        if postcheck_errors:
+            print("Postcheck status: failed after limit: " + "; ".join(postcheck_errors), flush=True)
+        else:
+            print("Postcheck status: passed", flush=True)
         print(f"Encoded bad vertices: {len(encoded_bad)}")
         print(f"Encoded hit pairs: {len(encoded_hits)}")
         print(f"Actual bad vertices: {len(actual_bad)}")
@@ -1275,6 +1450,11 @@ def solve_pair_hit_bound(args):
         )
         print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}")
         print(f"Cell antipodal pairs: {len(cell_antipodal_pairs(coloring, args.m))}")
+        print(f"Perfect inherited splits: {format_dimension_list(perfect_inherited_splits(coloring, args.m))}")
+        print(
+            "Uniform perfect inherited splits: "
+            f"{format_dimension_list(uniform_perfect_inherited_splits(coloring, args.m))}"
+        )
         print("Actual bad vertex list: " + ", ".join(vertex_name(v) for v in actual_bad))
         print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
         if args.show_examples:
@@ -1283,6 +1463,14 @@ def solve_pair_hit_bound(args):
             print(format_coloring_structure(coloring, args.m))
         if args.show_slices:
             print(format_slice_analysis(coloring, args.m))
+        break
+    else:
+        result = False
+
+    if not result:
+        print("SAT: False", flush=True)
+        if rejected_by_postcheck:
+            print(f"Postcheck rejected colorings: {rejected_by_postcheck}", flush=True)
 
     solver.delete()
 
@@ -1404,6 +1592,24 @@ def parse_args():
     parser.add_argument("--no-solve", action="store_true", help="Write SAT-mode CNF and exit without solving")
     parser.add_argument("--tmp-file", default="bicross_probe.cnf", help="CNF path for --no-solve")
     parser.add_argument(
+        "--postcheck-limit",
+        type=int,
+        default=1,
+        help="Maximum SAT models to concretely post-check and block in pair-hit SAT mode",
+    )
+    parser.add_argument(
+        "--postcheck-report-first",
+        type=int,
+        default=10,
+        help="Report the first N postcheck rejections in pair-hit SAT mode",
+    )
+    parser.add_argument(
+        "--postcheck-report-every",
+        type=int,
+        default=100,
+        help="After the first reports, print every Nth postcheck rejection; use 0 to silence periodic reports",
+    )
+    parser.add_argument(
         "--fix-zero-label",
         action="store_true",
         help="In SAT fixed-slice mode, use color-swap symmetry to set h(00...0)=red",
@@ -1428,6 +1634,22 @@ def parse_args():
         "--forbid-cell-pairs",
         action="store_true",
         help="In pair-hit SAT mode, forbid antipodal pairs inside one red/blue incidence cell",
+    )
+    parser.add_argument(
+        "--complete-bad",
+        action="store_true",
+        help=(
+            "In pair-hit SAT mode, require every unmarked bad variable to have a SAT reachability meet. "
+            "SAT models are still concrete-post-checked because reachability is monotone."
+        ),
+    )
+    parser.add_argument(
+        "--forbid-perfect-inherited-splits",
+        action="store_true",
+        help=(
+            "In pair-hit SAT mode, require every coordinate split to have a mismatch between full bad vertices "
+            "and induced-slice bad vertices. Implies --complete-bad."
+        ),
     )
     parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model edge list")
     parser.add_argument("--show-components", action="store_true", help="Print red/blue components for shown examples")

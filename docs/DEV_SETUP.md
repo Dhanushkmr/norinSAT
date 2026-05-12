@@ -72,6 +72,7 @@ make bicross-q6-hit30-proof
 make bicross-q6-hit29-proof
 make bicross-extremal-shapes
 make bicross-no-cell-frontier
+make bicross-dichotomy-checks
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -91,6 +92,11 @@ fastest way to replay the current non-compute proof clue.
 `make bicross-no-cell-frontier` tests the incidence-cell restriction: Q4 should
 be UNSAT, Q5 should be SAT, and the Q6 quick cube pass is currently expected to
 finish UNKNOWN unless the frontier has moved.
+
+`make bicross-dichotomy-checks` tests the sharper no-cell/no-perfect-inherited
+split falsification target.  Q4 should be UNSAT, Q5 should keep showing
+perfect inherited splits in exact no-cell samples, and the bounded Q6 cube pass
+is expected to return UNKNOWN with no SAT counter-signal.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

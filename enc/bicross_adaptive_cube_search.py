@@ -137,7 +137,7 @@ def write_stage_log(path, payload):
         handle.write(json.dumps(payload, sort_keys=True) + "\n")
 
 
-def solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r, log_path):
+def solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r, log_path, edge_literals):
     indexed_cubes = build_indexed_cubes(cube_literals, depth, selected_indexes)
     jobs = max(1, min(args.jobs or effective_cpu_count(), len(indexed_cubes) or 1))
     batches = batches_for_cubes(indexed_cubes, jobs, args.batch_size)
@@ -159,7 +159,18 @@ def solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r,
 
     with ProcessPoolExecutor(max_workers=jobs) as executor:
         futures = [
-            executor.submit(solve_cube_chunk, worker_id, clauses, batch, args.solver, args.conflict_budget)
+            executor.submit(
+                solve_cube_chunk,
+                worker_id,
+                clauses,
+                batch,
+                args.solver,
+                args.conflict_budget,
+                edge_literals,
+                args.m,
+                args.forbid_perfect_inherited_splits,
+                args.postcheck_limit_per_cube,
+            )
             for worker_id, batch in enumerate(batches)
         ]
         for future in as_completed(futures):
@@ -168,7 +179,8 @@ def solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r,
             unknown_indexes.extend(result["unknown_indexes"])
             print(
                 f"batch={result['worker_id']} solver={result['solver']} "
-                f"counts={result['counts']} elapsed={result['elapsed']:.2f}s",
+                f"counts={result['counts']} postcheck_rejections={result['postcheck_rejections']} "
+                f"elapsed={result['elapsed']:.2f}s",
                 flush=True,
             )
             if result["first_sat"] is not None and first_sat is None:
@@ -230,10 +242,13 @@ def run(args):
         zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
         partial_sym_break=args.partial_sym_break,
         forbid_cell_pairs=args.forbid_cell_pairs,
+        complete_bad=args.complete_bad,
+        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits,
     )
     solver.delete()
 
     _, _, edges = all_edges(args.m)
+    edge_literals = tuple((edge, r(*edge)) for edge in edges)
     tail_start_depth = args.tail_start_depth
     if tail_start_depth is None:
         tail_start_depth = args.parent_depth or 0
@@ -253,6 +268,10 @@ def run(args):
     print(f"Clauses: {len(clauses)}", flush=True)
     if args.forbid_cell_pairs:
         print("Restriction: no antipodal pair may share both red and blue components", flush=True)
+    if args.complete_bad or args.forbid_perfect_inherited_splits:
+        print("Restriction: complete bad variables using SAT reachability meets", flush=True)
+    if args.forbid_perfect_inherited_splits:
+        print("Restriction: reject concrete models with perfect inherited splits", flush=True)
     print(f"Depth schedule: {','.join(str(depth) for depth in depths)}", flush=True)
     print(f"Tail start depth: {tail_start_depth}", flush=True)
     print(f"Tail mode: {args.tail_mode}", flush=True)
@@ -264,7 +283,17 @@ def run(args):
             selected_indexes = expand_indexes(selected_indexes, current_depth, depth)
             current_depth = depth
 
-        first_sat, unknown_indexes = solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r, log_path)
+        first_sat, unknown_indexes = solve_stage(
+            args,
+            clauses,
+            cube_literals,
+            depth,
+            selected_indexes,
+            edges,
+            r,
+            log_path,
+            edge_literals,
+        )
         if first_sat is not None:
             return 0
         if not unknown_indexes:
@@ -302,6 +331,22 @@ def parse_args():
     parser.add_argument("--zero-red-degree-at-most-half", action="store_true", help="Bound red degree at 00...0")
     parser.add_argument("--partial-sym-break", type=int, default=0, help="Coordinate/bit-flip lex comparison cap")
     parser.add_argument("--forbid-cell-pairs", action="store_true", help="Forbid antipodal pairs inside one red/blue incidence cell")
+    parser.add_argument(
+        "--complete-bad",
+        action="store_true",
+        help="Complete bad variables using SAT reachability meets before cubing",
+    )
+    parser.add_argument(
+        "--forbid-perfect-inherited-splits",
+        action="store_true",
+        help="Reject concrete SAT cube models with a perfect inherited split; implies --complete-bad in the encoder",
+    )
+    parser.add_argument(
+        "--postcheck-limit-per-cube",
+        type=int,
+        default=1,
+        help="Maximum perfect-split SAT models to block inside one cube before marking it UNKNOWN; 0 means no limit",
+    )
     return parser.parse_args()
 
 

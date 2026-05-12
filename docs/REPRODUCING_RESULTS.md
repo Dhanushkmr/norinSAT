@@ -523,6 +523,90 @@ Interpretation:
 The paired-slice condition is not the right theorem.  SAT can avoid it.  But
 the component-chain condition still finds a one-connector path.
 
+## Inherited-Split / Incidence-Cell Dichotomy Checks
+
+The current falsification target is high pair-hit with neither branch of the
+candidate dichotomy:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 4 \
+  --sat-pairs-hit-at-least 6 \
+  --forbid-cell-pairs \
+  --forbid-perfect-inherited-splits \
+  --solver cadical195
+```
+
+Expected result:
+
+```text
+SAT: False
+```
+
+For Q5, use concrete post-check blocking.  The run below does not prove UNSAT;
+it tries to find an actual no-perfect coloring and reports when only spurious
+symbolic models are found.
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 5 \
+  --sat-pairs-hit-at-least 12 \
+  --forbid-cell-pairs \
+  --forbid-perfect-inherited-splits \
+  --solver cadical195 \
+  --postcheck-limit 5000 \
+  --postcheck-report-first 3 \
+  --postcheck-report-every 500
+```
+
+Observed result on 2026-05-13: no genuine no-perfect model in 5,000
+post-checked SAT colorings; every concrete coloring still had a perfect
+inherited split.
+
+Independent Q5 frontier sampling:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_extremal_analysis.py \
+  -m 5 \
+  --hit-bound 12 \
+  --models 500 \
+  --exact-hit \
+  --forbid-cell-pairs \
+  --summary-only \
+  --solver cadical195
+```
+
+Expected key lines:
+
+```text
+cell_antipodal_pairs: 1 distinct ... pair_count 0
+inheritance_shape: ... perfect_splits 1 ...
+```
+
+Bounded Q6 stress test:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_cube_search.py \
+  -m 6 \
+  --hit-bound 28 \
+  --forbid-cell-pairs \
+  --forbid-perfect-inherited-splits \
+  --cube-depth 6 \
+  --cube-mode prefix \
+  --jobs 0 \
+  --batch-size 4 \
+  --conflict-budget 50000 \
+  --stop-on-sat \
+  --solver cadical195 \
+  --sort-zero-edges \
+  --zero-red-degree-at-most-half \
+  --partial-sym-break 20 \
+  --postcheck-limit-per-cube 5
+```
+
+Observed result on 2026-05-13: 60/64 cubes UNSAT, no SAT cubes, UNKNOWN
+indexes `0,1,3,7`.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current
