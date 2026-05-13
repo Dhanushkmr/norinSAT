@@ -741,6 +741,36 @@ Bicross frontier conjecture, 2026-05-13:
   portfolio run.  That question is now a side frontier, not part of the main
   proof route.
 
+Bad-set structure analysis, 2026-05-14:
+
+- Added `enc/bad_set_structure.py` to print the component/incidence/slice
+  structure of either a construction or a SAT-found model.
+- Comparing the paired-coordinate `Q_6` construction with the SAT `Q_6`
+  38-bad witness shows the real invariant clearly:
+
+  ```text
+  paired: pairs_hit=28, bad=37, good=27, profile=(4,19,9)
+  SAT:    pairs_hit=28, bad=38, good=26, profile=(4,18,10)
+  ```
+
+- The SAT witness gains one bad vertex, but it does not hit another
+  antipodal pair.  It merely turns one already-hit pair from `one_bad` into
+  `both_bad`.
+- Both colorings have exactly one occupied red/blue incidence cell containing
+  all four bicross antipodal pairs.  In both cases that cell has size 8 and
+  no bad vertices.
+- The missing target cell multiplicities are also close:
+
+  ```text
+  paired: [1, 3, 3, 3, 9, 9, 9]
+  SAT:    [1, 3, 3, 4, 9, 9, 9]
+  ```
+
+- Proof signal: high pair-hit colorings seem to pay for extra bad vertices by
+  double-covering pairs, while a protected incidence cell remains forced to
+  carry the bicross pairs.  The next lemma should be a pair-coverage/cell-star
+  statement, not a good-set-size statement.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and

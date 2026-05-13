@@ -663,6 +663,25 @@ Antipodal pair profile: both_good=4, one_good=18, both_bad=10
 This does not contradict the quantitative bicross conjecture: the bad
 vertices still hit only 28 of the 32 antipodal pairs.
 
+To print the structural comparison against the paired-coordinate construction:
+
+```bash
+make bicross-bad-structure
+```
+
+Expected key lines:
+
+```text
+Model 1: pairs_hit=28; bad=37; good=27; bicross_pairs=4
+pair_profile=both_good=4, one_good=19, both_bad=9
+cell=(...); size=8; pairs=4; good=8; bad=0
+Model 1: pairs_hit=28; bad=38; good=26; bicross_pairs=4
+pair_profile=both_good=4, one_good=18, both_bad=10
+```
+
+The extra SAT bad vertex double-covers an already-hit antipodal pair rather
+than reducing the four untouched/bicross pairs.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

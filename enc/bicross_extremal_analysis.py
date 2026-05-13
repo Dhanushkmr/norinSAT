@@ -38,6 +38,19 @@ def pair_hits_from_profile(profile):
     return profile["one_good"] + profile["both_bad"]
 
 
+def pair_coverage_summary(profile):
+    pairs_hit = pair_hits_from_profile(profile)
+    bad_vertices_counted_by_pairs = profile["one_good"] + 2 * profile["both_bad"]
+    return {
+        "pairs_hit": pairs_hit,
+        "untouched_pairs": profile["both_good"],
+        "one_bad_pairs": profile["one_good"],
+        "two_bad_pairs": profile["both_bad"],
+        "bad_vertices_counted_by_pairs": bad_vertices_counted_by_pairs,
+        "extra_bad_vertices_over_pair_hits": bad_vertices_counted_by_pairs - pairs_hit,
+    }
+
+
 def model_to_coloring(model, edges, r):
     model_set = set(model)
     return {edge: literal_is_true(model_set, r(*edge)) for edge in edges}
@@ -186,6 +199,7 @@ def analyze_coloring(coloring, m, canonical=False):
 
     return {
         "pair_profile": dict(profile),
+        "pair_coverage": pair_coverage_summary(profile),
         "pairs_hit": pair_hits_from_profile(profile),
         "good_count": len(good),
         "bad_count": len(bad),
@@ -334,6 +348,7 @@ def format_analysis(index, analysis, show_slices=False):
         f"bicross_pairs={analysis['bicross_pair_count']}",
         "  pair_profile="
         + ", ".join(f"{key}={analysis['pair_profile'].get(key, 0)}" for key in ("both_good", "one_good", "both_bad")),
+        f"  pair_coverage={analysis['pair_coverage']}",
         f"  bad_weight_histogram={analysis['bad_weight_histogram']}",
         f"  good_weight_histogram={analysis['good_weight_histogram']}",
         f"  bad_parity_histogram={analysis['bad_parity_histogram']}",

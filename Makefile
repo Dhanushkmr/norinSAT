@@ -12,6 +12,7 @@ PY_SOURCES = \
 	enc/bicross_cube_search.py \
 	enc/bicross_adaptive_cube_search.py \
 	enc/bicross_extremal_analysis.py \
+	enc/bad_set_structure.py \
 	enc/bicross_frontier_construction.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
@@ -24,7 +25,7 @@ PY_SOURCES = \
 	enc/test_bicross_frontier_construction.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -61,6 +62,19 @@ bicross-good-count-falsification:
 		--sort-zero-edges \
 		--zero-red-degree-at-most-half \
 		--partial-sym-break 20
+
+bicross-bad-structure:
+	$(PYTHON) enc/bad_set_structure.py \
+		-m 6 \
+		--paired-construction \
+		--show-cell-details
+	$(PYSAT_PYTHON) enc/bad_set_structure.py \
+		-m 6 \
+		--sat-bad-at-least 38 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--show-cell-details
 
 bicross-extremal-shapes:
 	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \

@@ -534,6 +534,14 @@ pair profile `both_good=4, one_good=18, both_bad=10`.  The bad set is large,
 but it touches only 28 antipodal pairs.  So the correct invariant is not
 `|G|`; it is how many antipodal pairs are hit by `Bad`.
 
+The structural comparison is more precise.  The paired-coordinate `Q_6`
+construction has profile `(both_good, one_good, both_bad) = (4, 19, 9)`,
+while the 38-bad SAT witness has `(4, 18, 10)`.  The extra bad vertex only
+moves mass from a one-bad pair to a two-bad pair; it does not reduce the four
+untouched pairs.  Both colorings also have one red/blue incidence cell of
+size 8 containing all four bicross antipodal pairs and no bad vertices.  This
+points toward a pair-coverage/cell-star lemma as the lower-bound route.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

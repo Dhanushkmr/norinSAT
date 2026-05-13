@@ -75,6 +75,7 @@ make bicross-no-cell-frontier
 make bicross-dichotomy-checks
 make bicross-quantitative-construction
 make bicross-good-count-falsification
+make bicross-bad-structure
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -107,6 +108,10 @@ construction that realizes the conjectured sharp bicross count
 `make bicross-good-count-falsification` reproduces the `Q_6` SAT model with
 38 bad vertices.  This records that vertex-count minimization is a false
 proof route; the main lower-bound invariant is bad-set pair coverage.
+
+`make bicross-bad-structure` compares the paired-coordinate `Q_6`
+construction with the 38-bad SAT witness and prints the incidence cell that
+carries the four bicross antipodal pairs.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;
