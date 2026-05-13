@@ -638,6 +638,31 @@ coordinate in the pair.  Its good vertices are exactly those with no `00`
 paired block, so the bicross pairs are exactly the antipodal pairs whose paired
 blocks are all `01` or `10`.
 
+The good-vertex count from this construction is not an extremal lower bound.
+To reproduce the `Q_6` falsification of that stronger route:
+
+```bash
+uv run --python 3.12 --with python-sat python enc/bicross_probe.py \
+  -m 6 \
+  --sat-bad-at-least 38 \
+  --sort-zero-edges \
+  --zero-red-degree-at-most-half \
+  --partial-sym-break 20 \
+  --solver cadical195
+```
+
+Expected key lines:
+
+```text
+SAT: True
+Actual bad vertices: 38
+Actual good vertices: 26
+Antipodal pair profile: both_good=4, one_good=18, both_bad=10
+```
+
+This does not contradict the quantitative bicross conjecture: the bad
+vertices still hit only 28 of the 32 antipodal pairs.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

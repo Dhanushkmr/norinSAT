@@ -526,6 +526,14 @@ paired block is either `01` or `10`.  Hence:
 So the construction realizes `2^floor((m-1)/2)` in every dimension.  The
 remaining theorem is the lower bound: no coloring can have fewer.
 
+A tempting stronger route is false.  The paired construction has
+`|G| = 3^k` for `m = 2k` and `|G| = 2*3^k` for `m = 2k+1`, but this is
+not a universal lower bound on the number of good vertices.  A `Q_6` SAT
+model has 38 bad vertices, only 26 good vertices, and still the predicted
+pair profile `both_good=4, one_good=18, both_bad=10`.  The bad set is large,
+but it touches only 28 antipodal pairs.  So the correct invariant is not
+`|G|`; it is how many antipodal pairs are hit by `Bad`.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

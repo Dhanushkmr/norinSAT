@@ -11,6 +11,7 @@ from bicross_probe import (
     cell_antipodal_pairs,
     construct_bad_antipodal_labeling,
     doubled_coloring,
+    encode_bad_count_bound,
     good_vertices,
     encode_fixed_slice_negation,
     encode_pair_hit_bound,
@@ -141,9 +142,13 @@ class OptionalSatBicrossTests(unittest.TestCase):
         except ModuleNotFoundError as exc:
             self.skipTest(f"optional python-sat dependency unavailable: {exc}")
 
-        from bicross_probe import encode_bad_count_bound
-
-        solver, _, _, _, _ = encode_bad_count_bound(4, bad_bound=8)
+        solver, _, _, _, _ = encode_bad_count_bound(
+            4,
+            bad_bound=8,
+            sort_zero_edges=True,
+            zero_red_degree_at_most_half=True,
+            partial_sym_break=8,
+        )
         try:
             self.assertFalse(solver.solve(), "Q_4 should not have 8 bad vertices")
         finally:

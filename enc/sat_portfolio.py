@@ -110,6 +110,11 @@ def kill_job(job):
         os.killpg(job.proc.pid, signal.SIGKILL)
     except ProcessLookupError:
         pass
+    except PermissionError:
+        try:
+            job.proc.kill()
+        except ProcessLookupError:
+            pass
 
 
 def finish_job(job, status_override=None):

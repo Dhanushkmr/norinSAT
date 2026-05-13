@@ -939,7 +939,14 @@ def encode_fixed_slice_negation(
     return solver, vpool, r, h, clauses
 
 
-def encode_bad_count_bound(m, bad_bound, solver_name=None):
+def encode_bad_count_bound(
+    m,
+    bad_bound,
+    solver_name=None,
+    sort_zero_edges=False,
+    zero_red_degree_at_most_half=False,
+    partial_sym_break=0,
+):
     try:
         from pysat.card import CardEnc, EncType
         from pysat.formula import IDPool
@@ -991,6 +998,16 @@ def encode_bad_count_bound(m, bad_bound, solver_name=None):
     )
     clauses.extend(cardinality.clauses)
 
+    add_edge_coloring_symmetry_breaking(
+        clauses,
+        m,
+        r,
+        vpool,
+        sort_zero_edges=sort_zero_edges,
+        zero_red_degree_at_most_half=zero_red_degree_at_most_half,
+        partial_sym_break=partial_sym_break,
+    )
+
     solver, _ = make_pysat_solver(solver_name)
     for clause in clauses:
         solver.add_clause(clause)
@@ -998,7 +1015,7 @@ def encode_bad_count_bound(m, bad_bound, solver_name=None):
     return solver, vpool, r, bad, clauses
 
 
-def add_pair_hit_symmetry_breaking(
+def add_edge_coloring_symmetry_breaking(
     clauses,
     m,
     r,
@@ -1226,7 +1243,7 @@ def encode_pair_hit_bound(
     )
     clauses.extend(cardinality.clauses)
 
-    add_pair_hit_symmetry_breaking(
+    add_edge_coloring_symmetry_breaking(
         clauses,
         m,
         r,
@@ -1309,7 +1326,14 @@ def solve_fixed_slice_negation(args):
 
 
 def solve_bad_count_bound(args):
-    solver, vpool, r, bad, clauses = encode_bad_count_bound(args.m, args.sat_bad_at_least, args.solver)
+    solver, vpool, r, bad, clauses = encode_bad_count_bound(
+        args.m,
+        args.sat_bad_at_least,
+        args.solver,
+        sort_zero_edges=args.sort_zero_edges,
+        zero_red_degree_at_most_half=args.zero_red_degree_at_most_half,
+        partial_sym_break=args.partial_sym_break,
+    )
     vertices, _, edges = all_edges(args.m)
 
     print(f"Dimension: Q_{args.m}", flush=True)
@@ -1318,6 +1342,12 @@ def solve_bad_count_bound(args):
     print(f"Top variable: {vpool.top}", flush=True)
     print(f"Clauses: {len(clauses)}", flush=True)
     print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
+    if args.sort_zero_edges:
+        print("Symmetry: incident colors at 00...0 sorted", flush=True)
+    if args.zero_red_degree_at_most_half:
+        print("Symmetry: red degree at 00...0 at most half", flush=True)
+    if args.partial_sym_break:
+        print(f"Symmetry: coordinate/flip lex comparisons up to {args.partial_sym_break}", flush=True)
 
     if args.no_solve:
         write_dimacs(args.tmp_file, vpool.top, clauses)
@@ -1622,13 +1652,13 @@ def parse_args():
     parser.add_argument(
         "--zero-red-degree-at-most-half",
         action="store_true",
-        help="In pair-hit SAT mode, use color-swap symmetry to bound red degree at 00...0",
+        help="In bad-count and pair-hit SAT modes, use color-swap symmetry to bound red degree at 00...0",
     )
     parser.add_argument(
         "--partial-sym-break",
         type=int,
         default=0,
-        help="In pair-hit SAT mode, add coordinate/bit-flip lex symmetry breaking with this comparison cap",
+        help="In bad-count and pair-hit SAT modes, add coordinate/bit-flip lex symmetry breaking with this comparison cap",
     )
     parser.add_argument(
         "--forbid-cell-pairs",

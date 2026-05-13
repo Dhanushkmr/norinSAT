@@ -73,7 +73,8 @@ make bicross-q6-hit29-proof
 make bicross-extremal-shapes
 make bicross-no-cell-frontier
 make bicross-dichotomy-checks
-python3 enc/bicross_frontier_construction.py -m 8
+make bicross-quantitative-construction
+make bicross-good-count-falsification
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -102,6 +103,10 @@ is expected to return UNKNOWN with no SAT counter-signal.
 `enc/bicross_frontier_construction.py` prints the paired-coordinate
 construction that realizes the conjectured sharp bicross count
 `2^floor((m-1)/2)`.
+
+`make bicross-good-count-falsification` reproduces the `Q_6` SAT model with
+38 bad vertices.  This records that vertex-count minimization is a false
+proof route; the main lower-bound invariant is bad-set pair coverage.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

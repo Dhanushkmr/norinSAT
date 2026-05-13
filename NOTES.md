@@ -723,6 +723,24 @@ Bicross frontier conjecture, 2026-05-13:
   conjecture.  The remaining hard direction is the universal lower bound
   `bicross(C) >= 2^floor((m-1)/2)`.
 
+- Failed strengthening: the paired construction also has a neat good-vertex
+  count, `|G| = 3^k` for `m=2k` and `|G| = 2*3^k` for `m=2k+1`, but
+  this is not an extremal lower bound.  A SAT run for `Q_6` found a coloring
+  with 38 bad vertices, only 26 good vertices, and pair profile
+  `both_good=4, one_good=18, both_bad=10`.  That still matches the bicross
+  frontier because `Bad` hits only 28 antipodal pairs.
+- Consequence: any proof based only on the size of `G` is too weak or false.
+  The invariant must be antipodal-pair coverage by `Bad`, not vertex count.
+  The next lower-bound target remains:
+
+  ```text
+  hit(Bad(C)) <= 2^(m-1) - 2^floor((m - 1) / 2).
+  ```
+
+- The `Q_6` threshold `bad >= 39` did not settle in a 120-second all-solver
+  portfolio run.  That question is now a side frontier, not part of the main
+  proof route.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and
