@@ -483,6 +483,49 @@ inheritance, not connector uniformity.  A bounded `Q_6` no-cell/no-perfect cube
 search currently has many UNSAT cubes and no SAT counter-signal, with UNKNOWN
 descendants still remaining.
 
+## Quantitative Frontier And Sharpness Construction
+
+For a fixed coloring, the number of bicross antipodal pairs is exactly the
+number of antipodal pairs not touched by `Bad = V \ G`:
+
+```text
+bicross(C) = 2^(m-1) - hit(Bad(C)).
+```
+
+The finite frontier data suggests the sharp formula
+
+```text
+min_C bicross(C) = 2^floor((m - 1) / 2).
+```
+
+The sharpness side has a simple construction.  Pair coordinates
+`(0,1), (2,3), ...`.  In each pair, color an edge by the other coordinate in
+that pair:
+
+```text
+color(edge in coordinate 2j)     = x_{2j+1}
+color(edge in coordinate 2j + 1) = x_{2j}
+```
+
+If there is an unpaired final coordinate, color all edges in that coordinate
+blue.
+
+For one two-coordinate block, the red components are `{00}` and
+`{01,10,11}`, while the blue components are `{00,01,10}` and `{11}`.
+Therefore `R(x) intersect B(anti(x))` is empty in a block exactly when that
+block of `x` is `00`.  For the product coloring, `x in G` iff no paired
+block of `x` is `00`.
+
+An antipodal pair is bicross iff both endpoints are in `G`, which means every
+paired block is either `01` or `10`.  Hence:
+
+- for `m = 2k`, the construction has `2^(k-1)` bicross pairs;
+- for `m = 2k+1`, the unpaired coordinate doubles this to `2^k` bicross
+  pairs.
+
+So the construction realizes `2^floor((m-1)/2)` in every dimension.  The
+remaining theorem is the lower bound: no coloring can have fewer.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

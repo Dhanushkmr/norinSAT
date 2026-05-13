@@ -640,6 +640,89 @@ Dichotomy falsification pass, 2026-05-13:
   must have at least one perfect inherited split, then use that split as the
   induction interface.
 
+Slice-choice caveat, 2026-05-13:
+
+- The one-connector lemma is existential in the coordinate split.  It should
+  not be interpreted as saying that an arbitrary half-cube already contains a
+  smaller-dimensional antipodal path.
+- A valid monochromatic antipodal path can look like an `(n-1)`-direction path
+  lying in one half, with the last dimension supplied by a connector edge.
+  Relative to that terminal coordinate, this is exactly a one-connector
+  witness: the in-slice path only has to reach the connector's monochromatic
+  component.
+- This caveat supports the inherited-split/incidence-cell direction.  The proof
+  should identify a good split from the coloring's component structure, not
+  assume a predetermined slice is recursively valid.
+
+Forced opposite-half rim, 2026-05-13:
+
+- Split `Q_n` as `(s, x)` with `s in {0,1}` and `x in Q_{n-1}`.  If an internal
+  edge `(0,x)--(0,y)` is red, then its full antipodal edge
+  `(1,anti(x))--(1,anti(y))` is forced blue.
+- Therefore any red path inside the `0`-half has a forced blue antipodal copy
+  inside the `1`-half, with all projected vertices complemented.
+- If the red path runs from `(0,x)` to `(0,anti(x))` and the terminal connector
+  `(0,anti(x))--(1,anti(x))` is red, then the antipodal connector
+  `(0,x)--(1,x)` is blue.  So the other half also has a blue path:
+  `(1,anti(x))` follows the forced blue rim to `(1,x)`, then crosses the blue
+  connector to `(0,x)`.
+- This means a terminal-connector red witness automatically comes paired with a
+  terminal-connector blue witness on the antipodal side.  Connector colors are
+  not forced by coloring one half alone; only antipodal pairs of connectors are
+  forced opposite.
+- This does not by itself prove that every coordinate split works.  The
+  stronger statement that every split works is exactly the fixed-slice/bicross
+  lemma route: for any chosen split, the connector colors define an antipodal
+  vertex-labeling on one half, and bicross would force a one-connector witness
+  for that split.
+
+Bicross frontier conjecture, 2026-05-13:
+
+- For a fixed ordinary coloring of `Q_m`, let
+  `G = {x : R(x) intersects B(anti(x))}` and `Bad = V \ G`.
+- An antipodal pair is bicross exactly when both endpoints lie in `G`.
+  Therefore, exactly:
+
+  ```text
+  bicross(C) = 2^(m-1) - hit(Bad(C)),
+  ```
+
+  where `hit(Bad)` is the number of antipodal pairs touched by at least one bad
+  vertex.
+- The current exact values suggest the extremal formula
+
+  ```text
+  B_m = min_C bicross(C) = 2^floor((m - 1) / 2)
+  H_m = max_C hit(Bad(C)) = 2^(m-1) - 2^floor((m - 1) / 2).
+  ```
+
+- Known/supporting values: `B_1=1`, `B_2=1`, `B_3=2`, `B_4=2`, `B_5=4`,
+  `B_6=4`; the lifted `Q_7` near-obstruction has `B=8` candidates via
+  `hit=56`.
+- This would strengthen the bicross lemma from "at least one bicross pair" to
+  a sharp quantitative lower bound.  The proof burden is now two-sided:
+  prove the hit upper bound for every coloring, and find/describe sharp
+  constructions in every dimension.
+- The natural recurrence target is `B_{m+2} = 2 B_m`.  Doubling a coloring gives
+  one easy source of doubled profiles, but it does not by itself explain the
+  parity-preserving steps where the extremal count stays the same from `Q_3`
+  to `Q_4` or from `Q_5` to `Q_6`.
+- Sharpness construction found: pair coordinates `(0,1), (2,3), ...`.  Color
+  an edge in coordinate `2j` by the value of coordinate `2j+1`, and an edge
+  in coordinate `2j+1` by the value of coordinate `2j`.  If `m` is odd,
+  color the final unpaired coordinate blue.
+- In one two-coordinate block, the red components are `{00}` and
+  `{01,10,11}`; the blue components are `{00,01,10}` and `{11}`.  Hence
+  `x in G` fails exactly when some paired block of `x` is `00`.
+- Thus `G` has `3^k` vertices for `m=2k` and `2*3^k` vertices for
+  `m=2k+1`.  An antipodal pair is bicross exactly when every paired block is
+  `01` or `10`, giving `2^(k-1)` pairs for `m=2k` and `2^k` pairs for
+  `m=2k+1`.  This is `2^floor((m-1)/2)`.
+- Implemented as `enc/bicross_frontier_construction.py` with tests through
+  `Q_10`.  This proves the upper-bound/sharpness half of the quantitative
+  conjecture.  The remaining hard direction is the universal lower bound
+  `bicross(C) >= 2^floor((m-1)/2)`.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and

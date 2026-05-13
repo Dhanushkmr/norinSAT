@@ -607,6 +607,37 @@ uv run --python 3.12 --with python-sat python enc/bicross_cube_search.py \
 Observed result on 2026-05-13: 60/64 cubes UNSAT, no SAT cubes, UNKNOWN
 indexes `0,1,3,7`.
 
+## Quantitative Bicross Construction
+
+The paired-coordinate construction realizes the conjectured sharp number of
+bicross pairs in every tested dimension, and the component argument proves the
+count for all dimensions.
+
+```bash
+python3 enc/bicross_frontier_construction.py -m 8 --show-components
+```
+
+Expected key lines:
+
+```text
+Construction: paired-coordinate
+Good-set rule verified: True
+Pair profile: both_good=8, one_good=65, both_bad=55
+Bicross pairs: 8
+Hit pairs: 120
+```
+
+Run the construction tests:
+
+```bash
+python3 enc/test_bicross_frontier_construction.py
+```
+
+The construction colors coordinate pairs `(0,1), (2,3), ...` by the other
+coordinate in the pair.  Its good vertices are exactly those with no `00`
+paired block, so the bicross pairs are exactly the antipodal pairs whose paired
+blocks are all `01` or `10`.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

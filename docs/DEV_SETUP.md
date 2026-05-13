@@ -73,6 +73,7 @@ make bicross-q6-hit29-proof
 make bicross-extremal-shapes
 make bicross-no-cell-frontier
 make bicross-dichotomy-checks
+python3 enc/bicross_frontier_construction.py -m 8
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -97,6 +98,10 @@ finish UNKNOWN unless the frontier has moved.
 split falsification target.  Q4 should be UNSAT, Q5 should keep showing
 perfect inherited splits in exact no-cell samples, and the bounded Q6 cube pass
 is expected to return UNKNOWN with no SAT counter-signal.
+
+`enc/bicross_frontier_construction.py` prints the paired-coordinate
+construction that realizes the conjectured sharp bicross count
+`2^floor((m-1)/2)`.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

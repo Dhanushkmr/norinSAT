@@ -91,6 +91,15 @@ components.  The connector does not need to be incident to `v` or `anti(v)`.
 This is exactly why the component-chain classifier succeeds on models where the
 paired-slice witness fails.
 
+A useful warning about slice choice: the chosen coordinate split is part of the
+witness, not harmless bookkeeping.  A monochromatic antipodal path may do all
+of its visible work inside one half of the cube and then use a single connector
+edge as the final dimension change.  With respect to that coordinate, this is
+still a one-connector witness: the in-slice segment only needs to connect into
+the connector's monochromatic component, not prove a standalone antipodal
+statement for the slice.  So the lemma should not be read as saying that every
+or even most slices contain a smaller Norine path.
+
 ## Possible Routes To A Proof
 
 ### Route A: Component Separation
