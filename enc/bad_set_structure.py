@@ -14,12 +14,16 @@ from collections import defaultdict
 from bicross_extremal_analysis import analyze_coloring, format_analysis, model_to_coloring
 from bicross_frontier_construction import paired_coordinate_coloring
 from bicross_probe import (
+    BLUE,
     RED,
     antipodal_vertex_representatives,
+    cell_antipodal_pairs,
     component_data,
+    coloring_blocking_clause,
     encode_bad_count_bound,
     encode_pair_hit_bound,
     good_vertices,
+    perfect_inherited_splits,
     vertex_name,
 )
 from induction_probe import all_edges, anti
@@ -81,14 +85,42 @@ def solve_sat_pair_hit_model(args):
         print("Restriction: complete bad variables using SAT reachability meets")
     if args.forbid_perfect_inherited_splits:
         print("Restriction: every coordinate split must have a full/slice bad-set mismatch")
-    result = solver.solve()
-    print(f"SAT: {result}")
-    if not result:
-        solver.delete()
-        return None
-    coloring = model_to_coloring(solver.get_model(), edges, r)
+    rejected = 0
+    for attempt in range(1, args.postcheck_limit + 1):
+        result = solver.solve()
+        if not result:
+            print("SAT: False")
+            if rejected:
+                print(f"Postcheck rejected colorings: {rejected}")
+            solver.delete()
+            return None
+
+        coloring = model_to_coloring(solver.get_model(), edges, r)
+        errors = []
+        if args.forbid_cell_pairs and cell_antipodal_pairs(coloring, args.m):
+            errors.append("actual cell antipodal pairs present")
+        if args.forbid_perfect_inherited_splits and perfect_inherited_splits(coloring, args.m):
+            errors.append("actual perfect inherited splits present")
+
+        if not errors:
+            print("SAT: True")
+            if rejected:
+                print(f"Postcheck rejected colorings: {rejected}")
+            solver.delete()
+            return coloring
+
+        rejected += 1
+        if attempt <= args.postcheck_report_first or (
+            args.postcheck_report_every and attempt % args.postcheck_report_every == 0
+        ):
+            print(f"Postcheck rejected model {attempt}: " + "; ".join(errors), flush=True)
+        solver.add_clause(coloring_blocking_clause(coloring, r))
+
+    print("SAT: True")
+    print(f"Postcheck rejected colorings: {rejected}")
+    print("Postcheck status: failed after limit")
     solver.delete()
-    return coloring
+    return None
 
 
 def selected_coloring(args):
@@ -189,6 +221,19 @@ def parse_args():
     )
     parser.add_argument("--show-slices", action="store_true", help="Print per-coordinate slice summaries")
     parser.add_argument("--show-cell-details", action="store_true", help="Print antipodal-pair cells and missing target cells")
+    parser.add_argument("--postcheck-limit", type=int, default=1, help="SAT pair-hit mode: maximum concrete models to postcheck")
+    parser.add_argument(
+        "--postcheck-report-first",
+        type=int,
+        default=5,
+        help="Report the first N postcheck rejections in SAT pair-hit mode",
+    )
+    parser.add_argument(
+        "--postcheck-report-every",
+        type=int,
+        default=100,
+        help="After first reports, print every Nth postcheck rejection; use 0 to silence",
+    )
     parser.add_argument("--canonical", action="store_true", help="Compute a signed-coordinate canonical key")
     return parser.parse_args()
 

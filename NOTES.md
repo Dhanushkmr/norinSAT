@@ -771,6 +771,27 @@ Bad-set structure analysis, 2026-05-14:
   carry the bicross pairs.  The next lemma should be a pair-coverage/cell-star
   statement, not a good-set-size statement.
 
+Branch classifier, 2026-05-15:
+
+- Added `frontier_branch` to `enc/bicross_extremal_analysis.py`.  It records
+  whether a frontier model has the incidence-cell star branch, the perfect
+  inherited-split branch, both, or neither.
+- Current replay target: `make bicross-branch-samples`.
+- Compact finite table from sampled frontier models:
+
+  Q4 hit=6, ordinary frontier:      cell_star
+  Q5 hit=12, ordinary frontier:     both
+  Q5 hit=12, no-cell restriction:   inherited
+  Q6 hit=28, ordinary frontier:     cell_star
+
+- A `Q5` SAT search for `hit>=12 + no cell pairs + no perfect inherited split`
+  still produced no concrete counterexample after 500 postchecked blocked
+  colorings in the latest run.  Earlier longer notes record 5,000 blocked
+  colorings.  The relaxed SAT encoding can spoof the no-perfect condition, so
+  concrete postcheck remains mandatory.
+- The best current lemma is therefore a branch statement: high pair-hit implies
+  the cell-star branch or the perfect inherited-split branch.
+
 One-switch geodesic route:
 
 - If an antipodal geodesic from `x` to `anti(x)` has all red edges first and

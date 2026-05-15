@@ -6,6 +6,7 @@ from bicross_extremal_analysis import (
     cell_antipodal_pair_analysis,
     component_incidence_analysis,
     freeze,
+    frontier_branch,
     inheritance_shape,
     pair_coverage_summary,
     pair_hits_from_profile,
@@ -74,6 +75,18 @@ class BicrossExtremalAnalysisTests(unittest.TestCase):
 
         self.assertEqual(shape["perfect_splits"], 2)
         self.assertEqual(shape["uniform_perfect_splits"], 2)
+
+    def test_frontier_branch_detects_both_branch(self):
+        analysis = {
+            "bicross_pair_count": 4,
+            "cell_antipodal_pairs": {"pair_count": 4, "cells_with_pairs": 1},
+            "slice_signature": [{"recursion_score": (8, 0, 0), "uniform_connectors": False}],
+        }
+        branch = frontier_branch(analysis)
+
+        self.assertTrue(branch["cell_star"])
+        self.assertTrue(branch["perfect_inherited"])
+        self.assertEqual(branch["branch"], "both")
 
 
 if __name__ == "__main__":

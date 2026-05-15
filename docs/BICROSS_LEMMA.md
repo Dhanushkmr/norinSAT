@@ -542,6 +542,14 @@ untouched pairs.  Both colorings also have one red/blue incidence cell of
 size 8 containing all four bicross antipodal pairs and no bad vertices.  This
 points toward a pair-coverage/cell-star lemma as the lower-bound route.
 
+The cell-star lemma needs a branch condition.  Replayed samples now classify
+frontier models as follows: Q4 ordinary frontier is `cell_star`, Q5 ordinary
+frontier is `both`, Q5 no-cell frontier is `inherited`, and Q6 ordinary
+frontier is `cell_star`.  The candidate lower-bound route is therefore a
+dichotomy: high pair-hit forces either an incidence-cell star carrying the
+surviving bicross pairs, or a perfect inherited split that reduces the problem
+to a lower-dimensional frontier.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

@@ -682,6 +682,19 @@ pair_profile=both_good=4, one_good=18, both_bad=10
 The extra SAT bad vertex double-covers an already-hit antipodal pair rather
 than reducing the four untouched/bicross pairs.
 
+To replay the current branch classification samples:
+
+```bash
+make bicross-branch-samples
+```
+
+Expected branch lines:
+
+```text
+frontier_branch: ... ('branch', 'inherited') ...
+frontier_branch: ... ('branch', 'cell_star') ...
+```
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

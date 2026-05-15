@@ -280,6 +280,31 @@ def inheritance_shape(analysis):
     }
 
 
+def frontier_branch(analysis):
+    cell_pairs = analysis["cell_antipodal_pairs"]
+    inherited = inheritance_shape(analysis)
+    cell_star = (
+        analysis["bicross_pair_count"] > 0
+        and cell_pairs["pair_count"] == analysis["bicross_pair_count"]
+        and cell_pairs["cells_with_pairs"] == 1
+    )
+    perfect_inherited = inherited["perfect_splits"] > 0
+    return {
+        "cell_star": cell_star,
+        "perfect_inherited": perfect_inherited,
+        "uniform_perfect_inherited": inherited["uniform_perfect_splits"] > 0,
+        "branch": (
+            "both"
+            if cell_star and perfect_inherited
+            else "cell_star"
+            if cell_star
+            else "inherited"
+            if perfect_inherited
+            else "neither"
+        ),
+    }
+
+
 def slice_shape(analysis):
     rows = []
     for row in analysis["slice_signature"]:
@@ -307,6 +332,7 @@ def structural_signature(analysis):
         "incidence_shape": incidence_shape(analysis),
         "cell_antipodal_pairs": analysis["cell_antipodal_pairs"],
         "inheritance_shape": inheritance_shape(analysis),
+        "frontier_branch": frontier_branch(analysis),
         "bicross_shape": bicross_shape(analysis),
         "slice_shape": slice_shape(analysis),
     }
@@ -320,6 +346,7 @@ def update_aggregate_counts(analysis, aggregate_counts, structural_counts, repre
         "incidence_shape": incidence_shape(analysis),
         "cell_antipodal_pairs": analysis["cell_antipodal_pairs"],
         "inheritance_shape": inheritance_shape(analysis),
+        "frontier_branch": frontier_branch(analysis),
         "bicross_shape": bicross_shape(analysis),
         "slice_shape": slice_shape(analysis),
         "bad_boundary_profile": analysis["bad_boundary_profile"],
@@ -356,6 +383,7 @@ def format_analysis(index, analysis, show_slices=False):
         f"  incidence={analysis['incidence']}",
         f"  cell_antipodal_pairs={analysis['cell_antipodal_pairs']}",
         f"  inheritance_shape={inheritance_shape(analysis)}",
+        f"  frontier_branch={frontier_branch(analysis)}",
         f"  bad_boundary_profile={analysis['bad_boundary_profile']}",
         "  bicross_pairs:",
     ]
@@ -401,6 +429,7 @@ def format_aggregate_summary(aggregate_counts, structural_counts, representative
         "incidence_shape",
         "cell_antipodal_pairs",
         "inheritance_shape",
+        "frontier_branch",
         "bicross_shape",
         "slice_shape",
         "bad_boundary_profile",

@@ -178,6 +178,22 @@ This strengthens the current working lemma:
   shape.
 - The explicit no-cell SAT restriction found a second Q5 family that ordinary
   model sampling missed.
+- The `frontier_branch` summary now records the working dichotomy directly:
+  `cell_star`, `inherited`, `both`, or `neither`.
+
+Current compact branch table from replayed frontier samples:
+
+```text
+Q4 hit=6, ordinary frontier:      cell_star
+Q5 hit=12, ordinary frontier:     both
+Q5 hit=12, no-cell restriction:   inherited
+Q6 hit=28, ordinary frontier:     cell_star
+```
+
+The latest Q5 no-cell/no-perfect SAT falsification attempt blocked 500
+concrete colorings and found no genuine counterexample.  Because SAT
+reachability is monotone, symbolic no-perfect models still require concrete
+postcheck.
 
 ## What Did Not Work
 

@@ -76,6 +76,7 @@ make bicross-dichotomy-checks
 make bicross-quantitative-construction
 make bicross-good-count-falsification
 make bicross-bad-structure
+make bicross-branch-samples
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -112,6 +113,9 @@ proof route; the main lower-bound invariant is bad-set pair coverage.
 `make bicross-bad-structure` compares the paired-coordinate `Q_6`
 construction with the 38-bad SAT witness and prints the incidence cell that
 carries the four bicross antipodal pairs.
+
+`make bicross-branch-samples` replays compact Q5/Q6 frontier samples and
+prints the `frontier_branch` dichotomy summary.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

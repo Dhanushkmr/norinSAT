@@ -25,7 +25,7 @@ PY_SOURCES = \
 	enc/test_bicross_frontier_construction.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -75,6 +75,26 @@ bicross-bad-structure:
 		--zero-red-degree-at-most-half \
 		--partial-sym-break 20 \
 		--show-cell-details
+
+bicross-branch-samples:
+	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
+		-m 5 \
+		--hit-bound 12 \
+		--models 20 \
+		--exact-hit \
+		--forbid-cell-pairs \
+		--summary-only \
+		--signature-limit 3
+	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
+		-m 6 \
+		--hit-bound 28 \
+		--models 20 \
+		--exact-hit \
+		--summary-only \
+		--signature-limit 3 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
 
 bicross-extremal-shapes:
 	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
