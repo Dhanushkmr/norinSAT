@@ -162,6 +162,42 @@ def bicross_witness(coloring, m):
     return None
 
 
+def all_bicross_pairs(coloring, m):
+    vertices, _ = build_hypercube_graph(m)
+    components = component_data(coloring, m)
+    red = components[RED]
+    blue = components[BLUE]
+    pairs = []
+
+    for start in antipodal_vertex_representatives(vertices):
+        end = anti(start)
+        red_to_blue = first_intersection_vertex(
+            vertices,
+            red,
+            red[start],
+            blue,
+            blue[end],
+        )
+        blue_to_red = first_intersection_vertex(
+            vertices,
+            blue,
+            blue[start],
+            red,
+            red[end],
+        )
+        if red_to_blue is not None and blue_to_red is not None:
+            pairs.append(
+                BicrossWitness(
+                    start=start,
+                    end=end,
+                    red_to_blue_intersection=red_to_blue,
+                    blue_to_red_intersection=blue_to_red,
+                )
+            )
+
+    return tuple(pairs)
+
+
 def good_vertices(coloring, m):
     """Vertices x where R(x) intersects B(anti(x))."""
     vertices, _ = build_hypercube_graph(m)
@@ -228,6 +264,49 @@ def cell_antipodal_pairs(coloring, m):
             pairs.append((start, end))
 
     return tuple(pairs)
+
+
+def cell_antipodal_pair_cells(coloring, m):
+    """Cells containing antipodal pairs whose endpoints share red and blue components."""
+    vertices, _ = build_hypercube_graph(m)
+    components = component_data(coloring, m)
+    red = components[RED]
+    blue = components[BLUE]
+    cells = []
+
+    for start in antipodal_vertex_representatives(vertices):
+        end = anti(start)
+        if red[start] == red[end] and blue[start] == blue[end]:
+            cells.append((red[start], blue[start]))
+
+    return tuple(cells)
+
+
+def frontier_branch_summary(coloring, m):
+    bicross_pairs = all_bicross_pairs(coloring, m)
+    pair_cells = cell_antipodal_pair_cells(coloring, m)
+    perfect_splits = perfect_inherited_splits(coloring, m)
+    unique_pair_cells = set(pair_cells)
+    cell_star = bool(bicross_pairs) and len(pair_cells) == len(bicross_pairs) and len(unique_pair_cells) == 1
+    inherited = bool(perfect_splits)
+    branch = (
+        "both"
+        if cell_star and inherited
+        else "cell_star"
+        if cell_star
+        else "inherited"
+        if inherited
+        else "neither"
+    )
+    return {
+        "branch": branch,
+        "cell_star": cell_star,
+        "perfect_inherited": inherited,
+        "bicross_pairs": len(bicross_pairs),
+        "cell_antipodal_pairs": len(pair_cells),
+        "cell_pair_cells": len(unique_pair_cells),
+        "perfect_splits": perfect_splits,
+    }
 
 
 def slice_coloring(coloring, m, dimension, side):
@@ -605,6 +684,18 @@ def format_fixed_slice_witness(witness):
     if witness.opposite_color_path is not None:
         parts.append(f"opposite_color_path={format_path(witness.opposite_color_path)}")
     return "; ".join(parts)
+
+
+def format_frontier_branch_summary(summary):
+    return (
+        f"branch={summary['branch']}; "
+        f"cell_star={summary['cell_star']}; "
+        f"perfect_inherited={summary['perfect_inherited']}; "
+        f"bicross_pairs={summary['bicross_pairs']}; "
+        f"cell_antipodal_pairs={summary['cell_antipodal_pairs']}; "
+        f"cell_pair_cells={summary['cell_pair_cells']}; "
+        f"perfect_splits={format_dimension_list(summary['perfect_splits'])}"
+    )
 
 
 def format_labeling(labels):
@@ -1387,6 +1478,7 @@ def solve_bad_count_bound(args):
 
 
 def solve_pair_hit_bound(args):
+    forbid_perfect_inherited_splits = args.forbid_perfect_inherited_splits or args.forbid_frontier_branches
     solver, vpool, r, bad, pair_hit, clauses = encode_pair_hit_bound(
         args.m,
         args.sat_pairs_hit_at_least,
@@ -1396,7 +1488,7 @@ def solve_pair_hit_bound(args):
         partial_sym_break=args.partial_sym_break,
         forbid_cell_pairs=args.forbid_cell_pairs,
         complete_bad=args.complete_bad,
-        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits,
+        forbid_perfect_inherited_splits=forbid_perfect_inherited_splits,
     )
     vertices, _, edges = all_edges(args.m)
     representatives = list(antipodal_vertex_representatives(vertices))
@@ -1410,10 +1502,12 @@ def solve_pair_hit_bound(args):
     print(f"Solver: {best_pysat_solver_name(args.solver) or 'pysat-default'}", flush=True)
     if args.forbid_cell_pairs:
         print("Restriction: no antipodal pair may share both red and blue components", flush=True)
-    if args.complete_bad or args.forbid_perfect_inherited_splits:
+    if args.complete_bad or forbid_perfect_inherited_splits:
         print("Restriction: complete bad variables using SAT reachability meets", flush=True)
-    if args.forbid_perfect_inherited_splits:
+    if forbid_perfect_inherited_splits:
         print("Restriction: every coordinate split must have a full/slice bad-set mismatch", flush=True)
+    if args.forbid_frontier_branches:
+        print("Postcheck target: require neither cell-star nor perfect-inherited branch", flush=True)
     if args.sort_zero_edges:
         print("Symmetry: incident colors at 00...0 sorted", flush=True)
     if args.zero_red_degree_at_most_half:
@@ -1445,8 +1539,11 @@ def solve_pair_hit_bound(args):
         encoded_hits = tuple(v for v in representatives if literal_is_true(model_set, pair_hit(v)))
         perfect_splits = perfect_inherited_splits(coloring, args.m)
         uniform_perfect_splits = uniform_perfect_inherited_splits(coloring, args.m)
+        branch_summary = frontier_branch_summary(coloring, args.m)
         postcheck_errors = []
-        if args.forbid_perfect_inherited_splits and perfect_splits:
+        if args.forbid_frontier_branches and branch_summary["branch"] != "neither":
+            postcheck_errors.append(f"actual frontier branch={format_frontier_branch_summary(branch_summary)}")
+        elif args.forbid_perfect_inherited_splits and perfect_splits:
             postcheck_errors.append(f"actual perfect inherited splits={format_dimension_list(perfect_splits)}")
 
         if postcheck_errors and attempts < args.postcheck_limit:
@@ -1466,8 +1563,10 @@ def solve_pair_hit_bound(args):
             print(f"Postcheck rejected colorings: {rejected_by_postcheck}", flush=True)
         if postcheck_errors:
             print("Postcheck status: failed after limit: " + "; ".join(postcheck_errors), flush=True)
+            print("Postcheck accepted model: False", flush=True)
         else:
             print("Postcheck status: passed", flush=True)
+            print("Postcheck accepted model: True", flush=True)
         print(f"Encoded bad vertices: {len(encoded_bad)}")
         print(f"Encoded hit pairs: {len(encoded_hits)}")
         print(f"Actual bad vertices: {len(actual_bad)}")
@@ -1485,6 +1584,7 @@ def solve_pair_hit_bound(args):
             "Uniform perfect inherited splits: "
             f"{format_dimension_list(uniform_perfect_inherited_splits(coloring, args.m))}"
         )
+        print(f"Frontier branch: {format_frontier_branch_summary(branch_summary)}")
         print("Actual bad vertex list: " + ", ".join(vertex_name(v) for v in actual_bad))
         print(f"Bicross witness: {format_bicross_witness(bicross_witness(coloring, args.m))}")
         if args.show_examples:
@@ -1501,6 +1601,7 @@ def solve_pair_hit_bound(args):
         print("SAT: False", flush=True)
         if rejected_by_postcheck:
             print(f"Postcheck rejected colorings: {rejected_by_postcheck}", flush=True)
+            print("Postcheck accepted model: False", flush=True)
 
     solver.delete()
 
@@ -1679,6 +1780,15 @@ def parse_args():
         help=(
             "In pair-hit SAT mode, require every coordinate split to have a mismatch between full bad vertices "
             "and induced-slice bad vertices. Implies --complete-bad."
+        ),
+    )
+    parser.add_argument(
+        "--forbid-frontier-branches",
+        action="store_true",
+        help=(
+            "In pair-hit SAT mode, postcheck for a genuine neither-branch model: "
+            "no cell-star branch and no perfect inherited split. Uses the symbolic "
+            "no-perfect-split clauses as pruning, but concrete postcheck is authoritative."
         ),
     )
     parser.add_argument("--show-examples", action="store_true", help="Print first coloring or SAT model edge list")

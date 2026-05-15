@@ -195,6 +195,17 @@ concrete colorings and found no genuine counterexample.  Because SAT
 reachability is monotone, symbolic no-perfect models still require concrete
 postcheck.
 
+The sharper branch-falsification mode is `--forbid-frontier-branches`.  It
+does not merely forbid all incidence-cell pairs; it accepts only a concrete
+`neither` branch, meaning no cell-star branch and no perfect inherited split.
+Latest runs:
+
+```text
+Q4 hit>=6:  blocked 23 cell_star models, then SAT False.
+Q5 hit>=12: blocked 999 inherited/both/cell_star models, no neither within limit.
+Q6 hit>=28: blocked 99 cell_star models, no neither within limit.
+```
+
 ## What Did Not Work
 
 - More brute force on Q7 is not the right local next step without more compute.

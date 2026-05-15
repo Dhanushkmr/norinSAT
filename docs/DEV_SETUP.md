@@ -77,6 +77,7 @@ make bicross-quantitative-construction
 make bicross-good-count-falsification
 make bicross-bad-structure
 make bicross-branch-samples
+make bicross-branch-falsification
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -116,6 +117,11 @@ carries the four bicross antipodal pairs.
 
 `make bicross-branch-samples` replays compact Q5/Q6 frontier samples and
 prints the `frontier_branch` dichotomy summary.
+
+`make bicross-branch-falsification` runs the postchecked neither-branch
+search for Q4, Q5, and a bounded Q6 pass.  Q4 should become UNSAT after
+blocking cell-star models; Q5/Q6 are bounded falsification attempts, not full
+proofs.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

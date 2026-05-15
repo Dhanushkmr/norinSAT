@@ -550,6 +550,11 @@ dichotomy: high pair-hit forces either an incidence-cell star carrying the
 surviving bicross pairs, or a perfect inherited split that reduces the problem
 to a lower-dimensional frontier.
 
+The current SAT falsification target for this exact branch statement is
+`--forbid-frontier-branches`: search for high pair-hit while accepting only a
+concrete `neither` model.  The latest checks prove Q4's frontier has no such
+model, and bounded Q5/Q6 runs found no neither-branch counter-signal.
+
 ## Slice-Recursion Route
 
 For a coordinate split, write the full bad set as two projected sets

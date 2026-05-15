@@ -695,6 +695,20 @@ frontier_branch: ... ('branch', 'inherited') ...
 frontier_branch: ... ('branch', 'cell_star') ...
 ```
 
+To run the sharper neither-branch falsification checks:
+
+```bash
+make bicross-branch-falsification
+```
+
+Expected current interpretation:
+
+```text
+Q4: SAT False after blocking cell_star models.
+Q5: no neither model within the postcheck limit.
+Q6: no neither model within the bounded postcheck limit.
+```
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

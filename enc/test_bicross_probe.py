@@ -4,6 +4,7 @@ import unittest
 
 from bicross_probe import (
     arbitrary_coloring_from_bits,
+    all_bicross_pairs,
     antipodal_pair_profile,
     bad_vertices,
     bad_vertices_hit_every_antipodal_pair,
@@ -16,6 +17,7 @@ from bicross_probe import (
     encode_fixed_slice_negation,
     encode_pair_hit_bound,
     fixed_slice_witness,
+    frontier_branch_summary,
     iter_antipodal_labelings,
     monotone_geodesic_vertices,
     perfect_inherited_splits,
@@ -95,6 +97,16 @@ class BicrossProbeTests(unittest.TestCase):
         coloring = arbitrary_coloring_from_bits(edges, [0] * len(edges))
 
         self.assertEqual(cell_antipodal_pairs(coloring, 3), ())
+
+    def test_frontier_branch_summary_for_monochromatic_q2(self):
+        _, _, edges = all_edges(2)
+        coloring = arbitrary_coloring_from_bits(edges, [0] * len(edges))
+        summary = frontier_branch_summary(coloring, 2)
+
+        self.assertEqual(len(all_bicross_pairs(coloring, 2)), 2)
+        self.assertEqual(summary["branch"], "inherited")
+        self.assertFalse(summary["cell_star"])
+        self.assertTrue(summary["perfect_inherited"])
 
     def test_doubling_preserves_bad_vertices_by_copy(self):
         _, _, edges = all_edges(2)

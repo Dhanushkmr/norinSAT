@@ -791,6 +791,20 @@ Branch classifier, 2026-05-15:
   concrete postcheck remains mandatory.
 - The best current lemma is therefore a branch statement: high pair-hit implies
   the cell-star branch or the perfect inherited-split branch.
+- Implemented the exact postchecked falsification mode as
+  `--forbid-frontier-branches`.  It searches for high pair-hit colorings whose
+  concrete branch is `neither`: no cell-star branch and no perfect inherited
+  split.  Symbolic no-perfect-split clauses are used only as pruning.
+- Latest branch-falsification runs:
+
+  ```text
+  Q4 hit>=6:  blocked 23 cell_star models, then SAT False.
+  Q5 hit>=12: blocked 999 models, no neither model within limit.
+  Q6 hit>=28: blocked 99 cell_star models, no neither model within limit.
+  ```
+
+- The Q5 blocked models included `inherited`, `both`, and `cell_star` branches.
+  The Q6 blocked models were all `cell_star` in the bounded run.
 
 One-switch geodesic route:
 

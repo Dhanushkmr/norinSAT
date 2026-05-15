@@ -25,7 +25,7 @@ PY_SOURCES = \
 	enc/test_bicross_frontier_construction.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -95,6 +95,38 @@ bicross-branch-samples:
 		--sort-zero-edges \
 		--zero-red-degree-at-most-half \
 		--partial-sym-break 20
+
+bicross-branch-falsification:
+	$(PYSAT_PYTHON) enc/bicross_probe.py \
+		-m 4 \
+		--sat-pairs-hit-at-least 6 \
+		--forbid-frontier-branches \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 12 \
+		--postcheck-limit 200 \
+		--postcheck-report-first 5 \
+		--postcheck-report-every 50
+	$(PYSAT_PYTHON) enc/bicross_probe.py \
+		-m 5 \
+		--sat-pairs-hit-at-least 12 \
+		--forbid-frontier-branches \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--postcheck-limit 1000 \
+		--postcheck-report-first 5 \
+		--postcheck-report-every 100
+	$(PYSAT_PYTHON) enc/bicross_probe.py \
+		-m 6 \
+		--sat-pairs-hit-at-least 28 \
+		--forbid-frontier-branches \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--postcheck-limit 100 \
+		--postcheck-report-first 5 \
+		--postcheck-report-every 20
 
 bicross-extremal-shapes:
 	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \
