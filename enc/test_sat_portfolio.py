@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import sat_portfolio
+import sat_utils
 
 
 class FakeProcess:
@@ -34,6 +35,15 @@ class SatPortfolioTests(unittest.TestCase):
             sat_portfolio.kill_job(job)
 
         self.assertTrue(proc.killed)
+
+    def test_assumption_solver_selection_rejects_kissat(self):
+        with self.assertRaises(SystemExit):
+            sat_utils.best_pysat_solver_name("kissat404", require_assumptions=True)
+
+        self.assertEqual(
+            sat_utils.best_pysat_solver_name("cadical195", require_assumptions=True),
+            "cadical195",
+        )
 
 
 if __name__ == "__main__":

@@ -22,6 +22,8 @@ from bicross_probe import (
     cell_antipodal_pairs,
     encode_pair_hit_bound,
     format_dimension_list,
+    format_frontier_branch_summary,
+    frontier_branch_summary,
     literal_is_true,
     perfect_inherited_splits,
 )
@@ -105,9 +107,10 @@ def solve_cube_chunk(
     edge_literals=None,
     m=None,
     forbid_perfect_inherited_splits=False,
+    forbid_frontier_branches=False,
     postcheck_limit_per_cube=0,
 ):
-    solver, actual_solver = make_pysat_solver(solver_name)
+    solver, actual_solver = make_pysat_solver(solver_name, require_assumptions=True)
     for clause in clauses:
         solver.add_clause(clause)
 
@@ -128,9 +131,14 @@ def solve_cube_chunk(
 
             if result is True:
                 model = solver.get_model()
-                if forbid_perfect_inherited_splits:
+                if forbid_perfect_inherited_splits or forbid_frontier_branches:
                     coloring = model_to_coloring_from_edge_literals(model, edge_literals)
-                    if perfect_inherited_splits(coloring, m):
+                    if forbid_frontier_branches:
+                        branch_summary = frontier_branch_summary(coloring, m)
+                        reject_model = branch_summary["branch"] != "neither"
+                    else:
+                        reject_model = bool(perfect_inherited_splits(coloring, m))
+                    if reject_model:
                         postcheck_rejections += 1
                         rejected_for_cube += 1
                         if postcheck_limit_per_cube and rejected_for_cube >= postcheck_limit_per_cube:
@@ -190,6 +198,7 @@ def print_sat_model_summary(args, model, edges, r):
     print(f"Bad vertices hit every antipodal pair: {bad_vertices_hit_every_antipodal_pair(coloring, args.m)}", flush=True)
     print(f"Cell antipodal pairs: {len(cell_antipodal_pairs(coloring, args.m))}", flush=True)
     print(f"Perfect inherited splits: {format_dimension_list(perfect_inherited_splits(coloring, args.m))}", flush=True)
+    print(f"Frontier branch: {format_frontier_branch_summary(frontier_branch_summary(coloring, args.m))}", flush=True)
     print(f"Bicross witness: {bicross_witness(coloring, args.m)}", flush=True)
 
 
@@ -203,7 +212,7 @@ def run(args):
         partial_sym_break=args.partial_sym_break,
         forbid_cell_pairs=args.forbid_cell_pairs,
         complete_bad=args.complete_bad,
-        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits,
+        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits or args.forbid_frontier_branches,
     )
     solver.delete()
 
@@ -222,7 +231,7 @@ def run(args):
 
     jobs = max(1, min(args.jobs or effective_cpu_count(), len(indexed_cubes) or 1))
     batches = batches_for_cubes(indexed_cubes, jobs, args.batch_size)
-    solver_name = best_pysat_solver_name(args.solver)
+    solver_name = best_pysat_solver_name(args.solver, require_assumptions=True)
     started = time.monotonic()
 
     print(f"Dimension: Q_{args.m}", flush=True)
@@ -232,10 +241,12 @@ def run(args):
     print(f"Solver: {solver_name}", flush=True)
     if args.forbid_cell_pairs:
         print("Restriction: no antipodal pair may share both red and blue components", flush=True)
-    if args.complete_bad or args.forbid_perfect_inherited_splits:
+    if args.complete_bad or args.forbid_perfect_inherited_splits or args.forbid_frontier_branches:
         print("Restriction: complete bad variables using SAT reachability meets", flush=True)
     if args.forbid_perfect_inherited_splits:
         print("Restriction: reject concrete models with perfect inherited splits", flush=True)
+    if args.forbid_frontier_branches:
+        print("Restriction: reject concrete models unless branch=neither", flush=True)
     print(f"Workers: {jobs} (available cores: {effective_cpu_count()})", flush=True)
     print(f"Cube depth: {args.cube_depth}", flush=True)
     print(f"Cubes selected: {len(indexed_cubes)}/{len(cubes)}", flush=True)
@@ -259,6 +270,7 @@ def run(args):
                 edge_literals,
                 args.m,
                 args.forbid_perfect_inherited_splits,
+                args.forbid_frontier_branches,
                 args.postcheck_limit_per_cube,
             )
             for worker_id, batch in enumerate(batches)
@@ -342,7 +354,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=20260425, help="Random seed for cube selection/shuffle")
     parser.add_argument("--jobs", type=int, default=0, help="Parallel workers; default uses all available cores")
     parser.add_argument("--batch-size", type=int, default=0, help="Cubes per solver batch; default keeps one batch per worker")
-    parser.add_argument("--solver", default=None, help=solver_help())
+    parser.add_argument("--solver", default=None, help=solver_help(require_assumptions=True))
     parser.add_argument("--conflict-budget", type=int, default=0, help="Optional conflict budget per cube")
     parser.add_argument("--shuffle-cubes", action="store_true", help="Shuffle cube order before assigning workers")
     parser.add_argument("--only-cube-indexes", help="Comma-separated cube indexes/ranges to run after cube ordering")
@@ -362,10 +374,15 @@ def parse_args():
         help="Reject concrete SAT cube models with a perfect inherited split; implies --complete-bad in the encoder",
     )
     parser.add_argument(
+        "--forbid-frontier-branches",
+        action="store_true",
+        help="Reject concrete SAT cube models unless branch=neither; implies symbolic no-perfect-split pruning",
+    )
+    parser.add_argument(
         "--postcheck-limit-per-cube",
         type=int,
         default=1,
-        help="Maximum perfect-split SAT models to block inside one cube before marking it UNKNOWN; 0 means no limit",
+        help="Maximum rejected SAT models to block inside one cube before marking it UNKNOWN; 0 means no limit",
     )
     return parser.parse_args()
 

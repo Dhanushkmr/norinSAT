@@ -25,6 +25,10 @@ PREFERRED_PYSAT_SOLVERS = (
     "cryptosat",
 )
 
+ASSUMPTION_PYSAT_SOLVERS = tuple(
+    name for name in PREFERRED_PYSAT_SOLVERS if name not in {"kissat404"}
+)
+
 
 def effective_cpu_count(default=1):
     try:
@@ -53,27 +57,38 @@ def available_pysat_solvers(candidates=PREFERRED_PYSAT_SOLVERS):
     return tuple(available)
 
 
-def best_pysat_solver_name(explicit=None):
+def best_pysat_solver_name(explicit=None, require_assumptions=False):
+    candidates = ASSUMPTION_PYSAT_SOLVERS if require_assumptions else PREFERRED_PYSAT_SOLVERS
     if explicit:
+        if require_assumptions and explicit not in candidates:
+            allowed = ", ".join(candidates)
+            raise SystemExit(
+                f"PySAT solver {explicit!r} is not supported for assumption-based cube solving. "
+                f"Choose one of: {allowed}"
+            )
         return explicit
-    available = available_pysat_solvers()
+    available = available_pysat_solvers(candidates)
     return available[0] if available else None
 
 
-def make_pysat_solver(name=None):
+def make_pysat_solver(name=None, require_assumptions=False):
     try:
         from pysat.solvers import Solver
     except ModuleNotFoundError as exc:
         raise SystemExit(f"python-sat is required for SAT solving: {exc}") from exc
 
-    chosen = best_pysat_solver_name(name)
+    chosen = best_pysat_solver_name(name, require_assumptions=require_assumptions)
     if chosen is None:
         return Solver(), "pysat-default"
     return Solver(name=chosen), chosen
 
 
-def solver_help():
+def solver_help(require_assumptions=False):
+    suffix = ""
+    if require_assumptions:
+        suffix = " Assumption-based cube runners exclude solvers without assumption support, such as kissat404."
     return (
         "Optional PySAT solver name. If omitted, the fastest preferred "
         "available solver is selected automatically."
+        + suffix
     )

@@ -33,6 +33,11 @@ To see which of these are available in the current environment:
 make list-solvers
 ```
 
+The cube-and-conquer runners use SAT assumptions, so they intentionally exclude
+PySAT backends without assumption/incremental support.  In particular,
+`kissat404` is fine for one-shot formulas but is rejected for
+`enc/bicross_cube_search.py` and `enc/bicross_adaptive_cube_search.py`.
+
 ## Parallel Portfolio Runs
 
 Most SAT solvers used here are single-core.  To use all cores, run independent
@@ -78,6 +83,8 @@ make bicross-good-count-falsification
 make bicross-bad-structure
 make bicross-branch-samples
 make bicross-branch-falsification
+make bicross-branch-cubes
+make bicross-branch-adaptive-cubes
 make bicross-q7-portfolio
 make bicross-q7-full-cubes
 make bicross-q7-lift-search
@@ -122,6 +129,12 @@ prints the `frontier_branch` dichotomy summary.
 search for Q4, Q5, and a bounded Q6 pass.  Q4 should become UNSAT after
 blocking cell-star models; Q5/Q6 are bounded falsification attempts, not full
 proofs.
+
+`make bicross-branch-cubes` runs the same neither-branch search through the
+parallel cube-and-conquer helper.  It first replays the small Q4 proof and then
+starts a bounded Q6 cube pass using all available cores by default.  `make
+bicross-branch-adaptive-cubes` is the nested version for descending only the
+UNKNOWN Q6 cubes.
 
 `make bicross-q7-full-cubes` replays the current partial cube-and-conquer
 frontier for the `Q_7` full bicross obstruction.  It is not a proof target yet;

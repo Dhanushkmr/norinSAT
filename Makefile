@@ -25,7 +25,7 @@ PY_SOURCES = \
 	enc/test_bicross_frontier_construction.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -127,6 +127,51 @@ bicross-branch-falsification:
 		--postcheck-limit 100 \
 		--postcheck-report-first 5 \
 		--postcheck-report-every 20
+
+bicross-branch-cubes:
+	$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 4 \
+		--hit-bound 6 \
+		--forbid-frontier-branches \
+		--cube-depth 4 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 2 \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 12 \
+		--postcheck-limit-per-cube 0
+	-$(PYSAT_PYTHON) enc/bicross_cube_search.py \
+		-m 6 \
+		--hit-bound 28 \
+		--forbid-frontier-branches \
+		--cube-depth 6 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 50000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--postcheck-limit-per-cube 5
+
+bicross-branch-adaptive-cubes:
+	-$(PYSAT_PYTHON) enc/bicross_adaptive_cube_search.py \
+		-m 6 \
+		--hit-bound 28 \
+		--forbid-frontier-branches \
+		--parent-depth 6 \
+		--parent-indexes 0,1,3,7 \
+		--depths 8,10,12 \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 50000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--postcheck-limit-per-cube 5
 
 bicross-extremal-shapes:
 	$(PYSAT_PYTHON) enc/bicross_extremal_analysis.py \

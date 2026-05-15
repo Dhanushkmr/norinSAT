@@ -206,6 +206,39 @@ Q5 hit>=12: blocked 999 inherited/both/cell_star models, no neither within limit
 Q6 hit>=28: blocked 99 cell_star models, no neither within limit.
 ```
 
+The cube-and-conquer helpers now support the same branch postcheck:
+
+```bash
+make bicross-branch-cubes
+make bicross-branch-adaptive-cubes
+```
+
+This matters because the neither-branch target is exactly where a single SAT
+loop wastes time rediscovering nearby star or inherited models.  Cubing lets
+those rejections happen independently across cores, and the adaptive runner can
+refine only the UNKNOWN regions.
+
+Current Q6 cube replay with `--forbid-frontier-branches`, hit `>=28`, and 50k
+conflicts per cube:
+
+```text
+depth 6:  60/64 UNSAT, UNKNOWN 0,1,3,7, no SAT
+depth 8:   6/16 selected descendants UNSAT, 10 UNKNOWN, no SAT
+depth 10: 20/40 selected descendants UNSAT, 20 UNKNOWN, no SAT
+depth 12: 27/80 selected descendants UNSAT, 53 UNKNOWN, no SAT
+```
+
+The unresolved depth-12 indexes are:
+
+```text
+0-3,6-7,14-15,30-31,66-71,76-79,92-95,198-203,206-207,216-219,222-223,249,251,462-467,470-471,478-479,497,499,503
+```
+
+A quick attempt to switch this assumption-based cube run to `kissat404` exposed
+a tooling issue rather than a mathematical signal: PySAT Kissat ignores
+assumptions and does not support incremental repeated solving.  The helper now
+rejects it for cube runners.
+
 ## What Did Not Work
 
 - More brute force on Q7 is not the right local next step without more compute.

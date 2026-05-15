@@ -805,6 +805,40 @@ Branch classifier, 2026-05-15:
 
 - The Q5 blocked models included `inherited`, `both`, and `cell_star` branches.
   The Q6 blocked models were all `cell_star` in the bounded run.
+- Extended `enc/bicross_cube_search.py` and
+  `enc/bicross_adaptive_cube_search.py` with the same
+  `--forbid-frontier-branches` postcheck.  This lets the neither-branch
+  falsification target run as a parallel cube-and-conquer job instead of a
+  single repeated model-blocking loop.
+- New replay targets:
+
+  ```text
+  make bicross-branch-cubes
+  make bicross-branch-adaptive-cubes
+  ```
+
+  The first target proves the small `Q_4` neither-branch case by cubing and
+  then runs a bounded `Q_6` pass.  The second target descends UNKNOWN `Q_6`
+  cubes adaptively.  These are still falsification tools, not proof
+  certificates, unless all selected cubes finish UNSAT with no UNKNOWN.
+- Latest cube replay, 2026-05-16:
+
+  ```text
+  Q4 hit>=6 branch cubes: 16/16 cubes UNSAT, SAT False.
+  Q6 hit>=28 branch cubes, depth 6: 60/64 UNSAT, UNKNOWN 0,1,3,7, no SAT.
+  Q6 adaptive descendants, depth 8: 6/16 UNSAT, UNKNOWN 0-1,4-5,12-13,15,28-29,31.
+  Q6 adaptive descendants, depth 10: 20/40 UNSAT, UNKNOWN 0-1,3,7,16-17,19,23,49-51,54-55,62,115-117,119,124-125.
+  Q6 adaptive descendants, depth 12: 27/80 UNSAT, UNKNOWN 53, no SAT.
+  ```
+
+  This is useful but not decisive.  It says the branch lemma has survived the
+  first parallel Q6 stress pass; the remaining work is either a higher-budget
+  pass on the 53 depth-12 UNKNOWN cubes or a stronger symbolic encoding of the
+  branch conditions.
+- A portfolio check with `kissat404` found a tooling issue: PySAT Kissat does
+  not support assumptions and crashes under repeated cube assumptions.  The SAT
+  helper now rejects assumption-incompatible solvers for cube runners, while
+  leaving them available for one-shot formulas.
 
 One-switch geodesic route:
 

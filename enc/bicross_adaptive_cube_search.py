@@ -141,7 +141,7 @@ def solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r,
     indexed_cubes = build_indexed_cubes(cube_literals, depth, selected_indexes)
     jobs = max(1, min(args.jobs or effective_cpu_count(), len(indexed_cubes) or 1))
     batches = batches_for_cubes(indexed_cubes, jobs, args.batch_size)
-    solver_name = best_pysat_solver_name(args.solver)
+    solver_name = best_pysat_solver_name(args.solver, require_assumptions=True)
     started = time.monotonic()
 
     print(f"Stage depth: {depth}", flush=True)
@@ -169,6 +169,7 @@ def solve_stage(args, clauses, cube_literals, depth, selected_indexes, edges, r,
                 edge_literals,
                 args.m,
                 args.forbid_perfect_inherited_splits,
+                args.forbid_frontier_branches,
                 args.postcheck_limit_per_cube,
             )
             for worker_id, batch in enumerate(batches)
@@ -243,7 +244,7 @@ def run(args):
         partial_sym_break=args.partial_sym_break,
         forbid_cell_pairs=args.forbid_cell_pairs,
         complete_bad=args.complete_bad,
-        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits,
+        forbid_perfect_inherited_splits=args.forbid_perfect_inherited_splits or args.forbid_frontier_branches,
     )
     solver.delete()
 
@@ -268,10 +269,12 @@ def run(args):
     print(f"Clauses: {len(clauses)}", flush=True)
     if args.forbid_cell_pairs:
         print("Restriction: no antipodal pair may share both red and blue components", flush=True)
-    if args.complete_bad or args.forbid_perfect_inherited_splits:
+    if args.complete_bad or args.forbid_perfect_inherited_splits or args.forbid_frontier_branches:
         print("Restriction: complete bad variables using SAT reachability meets", flush=True)
     if args.forbid_perfect_inherited_splits:
         print("Restriction: reject concrete models with perfect inherited splits", flush=True)
+    if args.forbid_frontier_branches:
+        print("Restriction: reject concrete models unless branch=neither", flush=True)
     print(f"Depth schedule: {','.join(str(depth) for depth in depths)}", flush=True)
     print(f"Tail start depth: {tail_start_depth}", flush=True)
     print(f"Tail mode: {args.tail_mode}", flush=True)
@@ -323,7 +326,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=20260425, help="Random seed for --tail-mode random")
     parser.add_argument("--jobs", type=int, default=0, help="Parallel workers; default uses all available cores")
     parser.add_argument("--batch-size", type=int, default=8, help="Cubes per solver batch")
-    parser.add_argument("--solver", default=None, help=solver_help())
+    parser.add_argument("--solver", default=None, help=solver_help(require_assumptions=True))
     parser.add_argument("--conflict-budget", type=int, default=0, help="Optional conflict budget per cube")
     parser.add_argument("--stop-on-sat", action="store_true", help="Return as soon as any cube is SAT")
     parser.add_argument("--log-file", help="Optional JSONL stage log path")
@@ -342,10 +345,15 @@ def parse_args():
         help="Reject concrete SAT cube models with a perfect inherited split; implies --complete-bad in the encoder",
     )
     parser.add_argument(
+        "--forbid-frontier-branches",
+        action="store_true",
+        help="Reject concrete SAT cube models unless branch=neither; implies symbolic no-perfect-split pruning",
+    )
+    parser.add_argument(
         "--postcheck-limit-per-cube",
         type=int,
         default=1,
-        help="Maximum perfect-split SAT models to block inside one cube before marking it UNKNOWN; 0 means no limit",
+        help="Maximum rejected SAT models to block inside one cube before marking it UNKNOWN; 0 means no limit",
     )
     return parser.parse_args()
 

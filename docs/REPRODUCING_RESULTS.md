@@ -709,6 +709,37 @@ Q5: no neither model within the postcheck limit.
 Q6: no neither model within the bounded postcheck limit.
 ```
 
+The same concrete neither-branch postcheck is available in the parallel cube
+runners:
+
+```bash
+make bicross-branch-cubes
+make bicross-branch-adaptive-cubes
+```
+
+The cube target first replays the Q4 neither-branch proof by splitting on four
+edge variables, then starts a bounded Q6 run across all available cores.  The
+adaptive target is the continuation tool for descending only UNKNOWN Q6 cube
+indexes.
+
+Observed Q6 branch-cube result on 2026-05-16 with 50k conflicts per cube:
+
+```text
+depth 6:  60/64 UNSAT, UNKNOWN 0,1,3,7, no SAT
+depth 8:   6/16 selected descendants UNSAT, 10 UNKNOWN, no SAT
+depth 10: 20/40 selected descendants UNSAT, 20 UNKNOWN, no SAT
+depth 12: 27/80 selected descendants UNSAT, 53 UNKNOWN, no SAT
+```
+
+To resume exactly from that depth-12 frontier, use this UNKNOWN list:
+
+```text
+0-3,6-7,14-15,30-31,66-71,76-79,92-95,198-203,206-207,216-219,222-223,249,251,462-467,470-471,478-479,497,499,503
+```
+
+Do not use `--solver kissat404` for cube runners.  PySAT Kissat does not
+support assumptions, and the helper rejects it for this mode.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current
