@@ -14,6 +14,7 @@ PY_SOURCES = \
 	enc/bicross_extremal_analysis.py \
 	enc/bad_set_structure.py \
 	enc/bicross_frontier_construction.py \
+	enc/group_structure_probe.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
 	enc/sat_utils.py \
@@ -23,9 +24,10 @@ PY_SOURCES = \
 	enc/test_bicross_cube_search.py \
 	enc/test_bicross_extremal_analysis.py \
 	enc/test_bicross_frontier_construction.py \
+	enc/test_group_structure_probe.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers group-structure-probes group-affine-falsification bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -34,6 +36,7 @@ test:
 	$(PYTHON) enc/test_bicross_cube_search.py
 	$(PYTHON) enc/test_bicross_extremal_analysis.py
 	$(PYTHON) enc/test_bicross_frontier_construction.py
+	$(PYTHON) enc/test_group_structure_probe.py
 	$(PYTHON) enc/test_sat_portfolio.py
 	$(PYTHON) enc/test_component_chain_classifier.py
 
@@ -43,6 +46,7 @@ test-sat:
 	$(PYSAT_PYTHON) enc/test_bicross_cube_search.py
 	$(PYSAT_PYTHON) enc/test_bicross_extremal_analysis.py
 	$(PYSAT_PYTHON) enc/test_bicross_frontier_construction.py
+	$(PYSAT_PYTHON) enc/test_group_structure_probe.py
 	$(PYSAT_PYTHON) enc/test_sat_portfolio.py
 	$(PYSAT_PYTHON) enc/test_component_chain_classifier.py
 
@@ -50,6 +54,50 @@ test-all: test test-sat
 
 list-solvers:
 	$(PYSAT_PYTHON) enc/sat_portfolio.py --list-solvers
+
+group-structure-probes:
+	$(PYTHON) enc/group_structure_probe.py -m 3 --enumerate --max-edges 12 --stop-on-failure
+	$(PYTHON) enc/group_structure_probe.py -m 6 --paired-construction --show-first
+	$(PYSAT_PYTHON) enc/group_structure_probe.py \
+		-m 6 \
+		--sat-frontier \
+		--hit-bound 28 \
+		--models 50 \
+		--exact-hit \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--stop-on-failure
+
+group-affine-falsification:
+	$(PYSAT_PYTHON) enc/group_structure_probe.py \
+		-m 3 \
+		--sat-no-affine-survivor
+	$(PYSAT_PYTHON) enc/group_structure_probe.py \
+		-m 4 \
+		--sat-no-affine-survivor \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 12
+	$(PYSAT_PYTHON) enc/group_structure_probe.py \
+		-m 5 \
+		--sat-no-affine-survivor \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+	-$(PYSAT_PYTHON) enc/group_structure_probe.py \
+		-m 6 \
+		--sat-no-affine-cubes \
+		--cube-depth 12 \
+		--cube-mode prefix \
+		--only-cube-indexes 0-3,6-7,14-15,30-31,66-71,76-79,92-95,125,198-203,206-207,216-219,222-223,249,251,462-467,470-471,478-479,497,499,503 \
+		--jobs $(JOBS) \
+		--batch-size 2 \
+		--conflict-budget 200000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
 
 bicross-quantitative-construction:
 	$(PYTHON) enc/bicross_frontier_construction.py -m 8 --show-components

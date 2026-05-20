@@ -740,6 +740,37 @@ To resume exactly from that depth-12 frontier, use this UNKNOWN list:
 Do not use `--solver kissat404` for cube runners.  PySAT Kissat does not
 support assumptions, and the helper rejects it for this mode.
 
+## Group-Structure Affine Survivor
+
+The group/category-inspired probe is `enc/group_structure_probe.py`.  It tests
+whether the bicross antipodal pairs contain an affine subspace of dimension
+`floor((m - 1) / 2)` in the quotient `F_2^m / <omega>`.
+
+Replay the main samples:
+
+```bash
+make group-structure-probes
+```
+
+Replay the SAT negation checks:
+
+```bash
+make group-affine-falsification
+```
+
+Current expected behavior:
+
+```text
+Q3 no affine survivor: SAT False
+Q4 no affine survivor: SAT False
+Q5 no affine survivor: SAT False
+Q6 no affine survivor: bounded cube run remains SAT Unknown with no SAT model
+```
+
+The Q6 no-affine cube run currently leaves 53 depth-12 UNKNOWN cubes at 200k
+conflicts per cube.  This is the local compute wall for the affine-survivor
+route, not a counterexample.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

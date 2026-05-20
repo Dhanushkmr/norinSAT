@@ -302,3 +302,57 @@ component quotients
 ```
 
 That would explain both the count and the paired-coordinate extremal examples.
+
+## Experiment Update, 2026-05-20
+
+Implemented `enc/group_structure_probe.py`.
+
+The main theorem tested is: every coloring of `Q_m` has a bicross-pair set
+containing an affine subspace of dimension `floor((m - 1) / 2)` in
+`F_2^m / <omega>`.
+
+What survived:
+
+- Exact `Q_3` enumeration: `4096/4096` colorings contain the target affine
+  survivor.
+- The paired-coordinate construction has the bicross set exactly affine for
+  `m=1..8` in tests; in `Q_6` the four bicross pairs form an affine plane in
+  the quotient.
+- Random samples found no failures: `Q_4` 2000/2000, `Q_5` 2000/2000,
+  `Q_6` 1000/1000.
+- SAT frontier samples found no failures, and the whole bicross set was
+  affine in every sampled frontier model: `Q_4` 23/23, `Q_5` ordinary
+  100/100, `Q_5` no-cell 100/100, `Q_6` ordinary 50/50.
+- The direct SAT negation `--sat-no-affine-survivor` proves the theorem
+  through `Q_5`: `Q_3`, `Q_4`, and `Q_5` are UNSAT.
+
+For `Q_6`, the direct solver did not settle quickly.  Cube-and-conquer on the
+no-affine negation found no SAT counterexample but hit a local compute wall:
+
+```text
+depth 6,  50k conflicts: 60/64 UNSAT, UNKNOWN 0,1,3,7
+depth 8,  50k conflicts: 5/16 selected UNSAT, 11 UNKNOWN
+depth 10, 50k conflicts: 23/44 selected UNSAT, 21 UNKNOWN
+depth 12, 50k conflicts: 30/84 selected UNSAT, 54 UNKNOWN
+depth 12, 200k conflicts on those 54: 1 UNSAT, 53 UNKNOWN
+```
+
+An assumption-capable solver-diversity pass with `glucose4` did not help:
+`54/54` remained UNKNOWN at 50k conflicts.
+
+Current Q6 no-affine UNKNOWN list at depth 12:
+
+```text
+0,1,2,3,6,7,14,15,30,31,66,67,68,69,70,71,76,77,78,79,92,93,94,95,198,199,200,201,202,203,206,207,216,217,218,219,222,223,249,251,462,463,464,465,466,467,470,471,478,479,497,499,503
+```
+
+One dead-end correction: square curvature is probably not the right
+cohomology invariant for the symplectic construction.  The paired-coordinate
+coloring has zero square curvature because it is the derivative of a
+quadratic potential.  The useful linear-algebra object is instead the
+directional derivative/Hessian of the edge-color functions.
+
+New best proof direction: component quotient structure should force an
+affine survivor in `F_2^m / <omega>`, which then gives the quantitative
+bicross lower bound.  The `Q_5` UNSAT result makes this a serious candidate
+lemma rather than just a pretty interpretation.

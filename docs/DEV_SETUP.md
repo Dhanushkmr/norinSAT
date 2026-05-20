@@ -72,6 +72,8 @@ Useful Make targets:
 ```bash
 make bicross-q6-frontier
 make bicross-q6-cubes
+make group-structure-probes
+make group-affine-falsification
 make bicross-q6-hit31-proof
 make bicross-q6-hit30-proof
 make bicross-q6-hit29-proof
@@ -96,6 +98,11 @@ assumption split of the same formula.  The `hit31`, `hit30`, and `hit29` proof
 targets replay the staged cube proofs; `hit29` is the exact current frontier
 and uses all available cores by default.  Set `JOBS=4` or similar to cap CPU
 usage.
+
+`make group-structure-probes` replays the affine-survivor structure checks:
+exact Q3, the paired-coordinate construction, and Q6 frontier samples.
+`make group-affine-falsification` runs the direct no-affine SAT negation for
+Q3-Q5 and a bounded Q6 cube pass on the current hard depth-12 frontier.
 
 `make bicross-extremal-shapes` samples exact Q4, Q5, and Q6 pair-hit frontier
 models and prints aggregate component-incidence signatures.  This is the

@@ -908,3 +908,58 @@ Group/category proof directions, 2026-05-20:
   descent data along a face map; a cell-star witness is an antipodal pair in
   one fiber.  The branch lemma becomes a descent-or-fiber theorem for
   connectivity quotients of products `[1]^m`.
+
+Affine-survivor experiments, 2026-05-20:
+
+- Added `enc/group_structure_probe.py` and tests.  The main target is now:
+
+  ```text
+  Every coloring of Q_m has a bicross-pair set containing an affine
+  subspace of dimension floor((m - 1) / 2) in F_2^m / <omega>.
+  ```
+
+- Exact `Q_3` enumeration: all `4096` ordinary edge colorings contain the
+  target affine survivor.
+- Paired construction: the bicross set is exactly affine for `m=1..8` in
+  tests; for `Q_6`, the four bicross pairs are an affine plane.
+- Random checks: no failures in `Q_4` 2000 samples, `Q_5` 2000 samples, or
+  `Q_6` 1000 samples.
+- SAT frontier checks: sampled frontier bicross sets were not just containing
+  affine survivors; the whole bicross set was affine.
+
+  ```text
+  Q4 hit=6:                 23/23 affine
+  Q5 hit=12 ordinary:      100/100 affine
+  Q5 hit=12 no-cell:       100/100 affine
+  Q6 hit=28 ordinary:       50/50 affine
+  ```
+
+- Direct SAT negation `--sat-no-affine-survivor` proves the affine-survivor
+  theorem through `Q_5`: `Q_3`, `Q_4`, and `Q_5` are UNSAT.
+- `Q_6` no-affine negation remains locally unresolved.  No SAT counterexample
+  appeared, but cube-and-conquer hit a compute wall:
+
+  ```text
+  depth 6,  50k conflicts: 60/64 UNSAT, UNKNOWN 0,1,3,7
+  depth 8,  50k conflicts: 5/16 selected UNSAT, 11 UNKNOWN
+  depth 10, 50k conflicts: 23/44 selected UNSAT, 21 UNKNOWN
+  depth 12, 50k conflicts: 30/84 selected UNSAT, 54 UNKNOWN
+  depth 12, 200k conflicts on those 54: 1 UNSAT, 53 UNKNOWN
+  glucose4 depth 12, 50k: 0 UNSAT, 54 UNKNOWN
+  ```
+
+- Current depth-12 UNKNOWN list for Q6 no-affine:
+
+  ```text
+  0,1,2,3,6,7,14,15,30,31,66,67,68,69,70,71,76,77,78,79,92,93,94,95,198,199,200,201,202,203,206,207,216,217,218,219,222,223,249,251,462,463,464,465,466,467,470,471,478,479,497,499,503
+  ```
+
+- Dead-end correction: square curvature is not the right cohomology invariant
+  for the symplectic construction.  The paired-coordinate coloring has zero
+  square curvature because it is the derivative of a quadratic potential.  The
+  useful object is the directional derivative/Hessian of the edge-color
+  functions.
+- Best next proof target: prove that component quotient structure forces an
+  affine survivor in `F_2^m/<omega>`.  The Q5 UNSAT result makes this stronger
+  than a visual pattern, but Q6 still needs either a proof idea or a stronger
+  encoding.
