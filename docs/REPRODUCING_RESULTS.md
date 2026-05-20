@@ -771,6 +771,24 @@ The Q6 no-affine cube run currently leaves 53 depth-12 UNKNOWN cubes at 200k
 conflicts per cube.  This is the local compute wall for the affine-survivor
 route, not a counterexample.
 
+Additional replay for finite-geometry baselines:
+
+```bash
+make group-geometry-baseline
+```
+
+Expected baseline highlights:
+
+```text
+F2^4, 4-subsets: 140/1820 are affine planes
+F2^5, 4-subsets: 1240/35960 are affine planes
+F2^5, 5-subsets: 34720/201376 contain an affine plane
+F2^5, random 6-subsets: about 9441/20000 contain an affine plane
+```
+
+This shows the affine survivor is not a generic property of same-size quotient
+subsets; it is extra structure coming from the bicross/component setup.
+
 ## One-Connector Negation SAT Runs
 
 These are the most important checks.  They encode the negation of the current

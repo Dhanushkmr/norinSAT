@@ -5,15 +5,20 @@ from bicross_frontier_construction import paired_coordinate_coloring
 from bicross_probe import arbitrary_coloring_from_bits
 from group_structure_probe import (
     bicross_quotient_set,
+    count_affine_subspaces,
     find_affine_subspace,
     gf2_rank,
+    geometry_baseline_summary,
     is_affine_subspace,
     iter_linear_subspaces,
+    max_affine_dimension,
     no_affine_survivor_clauses,
     quotient_dimension,
     quotient_point,
+    quotient_cube_stabilizer_size,
     square_curvature_rows,
     analyze_coloring,
+    translation_stabilizer_size,
 )
 from induction_probe import all_edges, anti
 
@@ -37,7 +42,15 @@ class GroupStructureProbeTests(unittest.TestCase):
 
         self.assertIsNotNone(witness)
         self.assertTrue(is_affine_subspace(plane))
+        self.assertEqual(count_affine_subspaces(plane, n=3, d=2), 1)
+        self.assertEqual(max_affine_dimension(plane, n=3), (2, 1))
         self.assertEqual(gf2_rank([1, 2, 3]), 2)
+
+    def test_stabilizers_for_affine_plane(self):
+        plane = frozenset({1, 3, 5, 7})
+
+        self.assertEqual(translation_stabilizer_size(plane, 3), 4)
+        self.assertGreaterEqual(quotient_cube_stabilizer_size(plane, 4), 4)
 
     def test_no_affine_clause_counts(self):
         def fake_bad(vertex):
@@ -48,6 +61,12 @@ class GroupStructureProbeTests(unittest.TestCase):
         self.assertEqual(len(no_affine_survivor_clauses(5, fake_bad)), 140)
         self.assertEqual(len(no_affine_survivor_clauses(6, fake_bad)), 1240)
 
+    def test_geometry_baseline_q4_four_point_subsets(self):
+        summary = geometry_baseline_summary(4, subset_size=2)
+
+        self.assertEqual(summary["checked"], 28)
+        self.assertEqual(summary["target_count_distribution"][1], 28)
+
     def test_paired_construction_has_exact_affine_survivor(self):
         for m in range(1, 9):
             with self.subTest(m=m):
@@ -56,6 +75,8 @@ class GroupStructureProbeTests(unittest.TestCase):
 
                 self.assertTrue(analysis["contains_target_affine"])
                 self.assertTrue(analysis["bicross_set_is_affine"])
+                self.assertEqual(analysis["max_affine_dimension"], analysis["target_affine_dimension"])
+                self.assertEqual(analysis["target_affine_count"], 1)
                 self.assertEqual(analysis["bicross_pair_count"], analysis["predicted_min_bicross"])
 
     def test_exact_q3_all_colorings_have_affine_survivor(self):

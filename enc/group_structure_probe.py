@@ -16,6 +16,7 @@ This identifies antipodal vertices and gives coordinates in F_2^(m-1).
 from __future__ import annotations
 
 import argparse
+import functools
 import itertools
 import math
 import random
@@ -177,6 +178,20 @@ def find_affine_subspace(points, n, d):
     return None
 
 
+def count_affine_subspaces(points, n, d):
+    points = frozenset(points)
+    return sum(1 for affine_points, _basis in iter_affine_subspaces(n, d) if affine_points <= points)
+
+
+def max_affine_dimension(points, n):
+    points = frozenset(points)
+    for dimension in range(n, -1, -1):
+        count = count_affine_subspaces(points, n, dimension)
+        if count:
+            return dimension, count
+    return -1, 0
+
+
 def affine_span(points):
     points = tuple(sorted(points))
     if not points:
@@ -207,6 +222,36 @@ def is_affine_subspace(points):
         return False
     span, _basis = affine_span(points)
     return span == points
+
+
+@functools.lru_cache(maxsize=None)
+def coordinate_permutations(m):
+    return tuple(itertools.permutations(range(m)))
+
+
+def quotient_permute_point(point, m, permutation):
+    representative = quotient_representative(point, m)
+    transformed = tuple(representative[permutation[index]] for index in range(m))
+    return quotient_point(transformed)
+
+
+def translation_stabilizer_size(points, n):
+    points = frozenset(points)
+    if not points:
+        return 0
+    return sum(1 for shift in range(1 << n) if frozenset(point ^ shift for point in points) == points)
+
+
+def quotient_cube_stabilizer_size(points, m):
+    points = frozenset(points)
+    if not points:
+        return 0
+    n = quotient_dimension(m)
+    total = 0
+    for permutation in coordinate_permutations(m):
+        permuted = frozenset(quotient_permute_point(point, m, permutation) for point in points)
+        total += sum(1 for shift in range(1 << n) if frozenset(point ^ shift for point in permuted) == points)
+    return total
 
 
 def edge_color_in_direction(coloring, m, vertex_int, dimension):
@@ -285,25 +330,30 @@ def affine_direction_summary(coloring, m):
     }
 
 
-def analyze_coloring(coloring, m):
+def analyze_coloring(coloring, m, compute_stabilizer=False):
     qdim = quotient_dimension(m)
     target_dim = (m - 1) // 2
     bicross_points = bicross_quotient_set(coloring, m)
     affine_witness = find_affine_subspace(bicross_points, qdim, target_dim)
+    target_affine_count = count_affine_subspaces(bicross_points, qdim, target_dim)
+    max_affine_dim, max_affine_count = max_affine_dimension(bicross_points, qdim)
     span, span_basis = affine_span(bicross_points)
     profile = antipodal_pair_profile(coloring, m)
     if m >= 2:
         branch = frontier_branch_summary(coloring, m)
     else:
         branch = {"branch": "base", "cell_star": False, "perfect_inherited": False}
-    return {
+    analysis = {
         "m": m,
         "quotient_dimension": qdim,
         "target_affine_dimension": target_dim,
         "bicross_pair_count": len(bicross_points),
         "predicted_min_bicross": predicted_min_bicross(m),
         "contains_target_affine": affine_witness is not None,
+        "target_affine_count": target_affine_count,
         "target_affine_witness": affine_witness,
+        "max_affine_dimension": max_affine_dim,
+        "max_affine_count": max_affine_count,
         "bicross_set_is_affine": is_affine_subspace(bicross_points),
         "bicross_affine_span_size": len(span),
         "bicross_affine_span_rank": len(span_basis),
@@ -312,6 +362,12 @@ def analyze_coloring(coloring, m):
         "curvature": curvature_summary(coloring, m),
         "affine_directions": affine_direction_summary(coloring, m),
     }
+    if compute_stabilizer:
+        analysis["stabilizer"] = {
+            "translation": translation_stabilizer_size(bicross_points, qdim),
+            "quotient_cube": quotient_cube_stabilizer_size(bicross_points, m),
+        }
+    return analysis
 
 
 def format_point_set(points, qdim):
@@ -326,6 +382,9 @@ def format_analysis(analysis):
         f"Bicross pairs: {analysis['bicross_pair_count']}",
         f"Predicted minimum: {analysis['predicted_min_bicross']}",
         f"Contains target affine subspace: {analysis['contains_target_affine']}",
+        f"Target affine subspace count: {analysis['target_affine_count']}",
+        f"Max affine dimension: {analysis['max_affine_dimension']}",
+        f"Max affine subspace count: {analysis['max_affine_count']}",
         f"Bicross set is affine: {analysis['bicross_set_is_affine']}",
         f"Bicross affine span rank: {analysis['bicross_affine_span_rank']}",
         f"Bicross affine span size: {analysis['bicross_affine_span_size']}",
@@ -356,6 +415,12 @@ def format_analysis(analysis):
         points, basis = analysis["target_affine_witness"]
         lines.append("Affine witness points: " + format_point_set(points, analysis["quotient_dimension"]))
         lines.append("Affine witness basis: " + format_point_set(basis, analysis["quotient_dimension"]))
+    if "stabilizer" in analysis:
+        lines.append(
+            "Stabilizer: "
+            f"translation={analysis['stabilizer']['translation']}, "
+            f"quotient_cube={analysis['stabilizer']['quotient_cube']}"
+        )
     return "\n".join(lines)
 
 
@@ -364,6 +429,10 @@ def aggregate_analyses(analyses):
     curvature_ranks = Counter()
     span_ranks = Counter()
     affine_direction_counts = Counter()
+    target_affine_counts = Counter()
+    max_affine_dimensions = Counter()
+    translation_stabilizers = Counter()
+    quotient_cube_stabilizers = Counter()
     branches = Counter()
     failures = []
     for index, analysis in enumerate(analyses, start=1):
@@ -375,16 +444,25 @@ def aggregate_analyses(analyses):
             failures.append(index)
         if analysis["bicross_set_is_affine"]:
             counter["bicross_set_is_affine"] += 1
+        target_affine_counts[analysis["target_affine_count"]] += 1
+        max_affine_dimensions[analysis["max_affine_dimension"]] += 1
         curvature_ranks[analysis["curvature"]["rank"]] += 1
         span_ranks[analysis["bicross_affine_span_rank"]] += 1
         affine_direction_counts[analysis["affine_directions"]["affine_directions"]] += 1
         branches[analysis["frontier_branch"]["branch"]] += 1
+        if "stabilizer" in analysis:
+            translation_stabilizers[analysis["stabilizer"]["translation"]] += 1
+            quotient_cube_stabilizers[analysis["stabilizer"]["quotient_cube"]] += 1
 
     return {
         "counts": counter,
+        "target_affine_counts": target_affine_counts,
+        "max_affine_dimensions": max_affine_dimensions,
         "curvature_ranks": curvature_ranks,
         "span_ranks": span_ranks,
         "affine_direction_counts": affine_direction_counts,
+        "translation_stabilizers": translation_stabilizers,
+        "quotient_cube_stabilizers": quotient_cube_stabilizers,
         "branches": branches,
         "failure_indexes": failures,
     }
@@ -396,6 +474,12 @@ def print_aggregate(summary):
     print(f"With target affine survivor: {counts['contains_target_affine']}")
     print(f"Affine survivor failures: {counts['affine_failures']}")
     print(f"Bicross set itself affine: {counts['bicross_set_is_affine']}")
+    print("Target affine survivor count distribution:")
+    for flat_count, count in sorted(summary["target_affine_counts"].items()):
+        print(f"  {flat_count}: {count}")
+    print("Max affine dimension distribution:")
+    for dimension, count in sorted(summary["max_affine_dimensions"].items()):
+        print(f"  {dimension}: {count}")
     print("Bicross affine span rank distribution:")
     for rank, count in sorted(summary["span_ranks"].items()):
         print(f"  {rank}: {count}")
@@ -408,6 +492,14 @@ def print_aggregate(summary):
     print("Frontier branch distribution:")
     for branch, count in sorted(summary["branches"].items()):
         print(f"  {branch}: {count}")
+    if summary["translation_stabilizers"]:
+        print("Translation stabilizer distribution:")
+        for stabilizer, count in sorted(summary["translation_stabilizers"].items()):
+            print(f"  {stabilizer}: {count}")
+    if summary["quotient_cube_stabilizers"]:
+        print("Quotient cube stabilizer distribution:")
+        for stabilizer, count in sorted(summary["quotient_cube_stabilizers"].items()):
+            print(f"  {stabilizer}: {count}")
     if summary["failure_indexes"]:
         print("Failure model indexes: " + ",".join(map(str, summary["failure_indexes"][:20])))
 
@@ -477,6 +569,87 @@ def no_affine_survivor_clauses(m, bad):
             clause.append(bad(anti(vertex)))
         clauses.append(clause)
     return clauses
+
+
+@functools.lru_cache(maxsize=None)
+def affine_subspace_masks(n, d):
+    masks = []
+    for points, _basis in iter_affine_subspaces(n, d):
+        mask = 0
+        for point in points:
+            mask |= 1 << point
+        masks.append(mask)
+    return tuple(masks)
+
+
+def subset_mask(points):
+    mask = 0
+    for point in points:
+        mask |= 1 << point
+    return mask
+
+
+def geometry_baseline_summary(m, subset_size, samples=0, seed=20260520, max_subsets=250000):
+    n = quotient_dimension(m)
+    d = (m - 1) // 2
+    universe_size = 1 << n
+    total_subsets = math.comb(universe_size, subset_size)
+    exact = samples == 0
+    if exact and total_subsets > max_subsets:
+        raise SystemExit(
+            f"Exact baseline has {total_subsets} subsets; raise --max-subsets or use --geometry-samples"
+        )
+
+    target_flats = affine_subspace_masks(n, d)
+    all_flats_by_dimension = {dimension: affine_subspace_masks(n, dimension) for dimension in range(d, n + 1)}
+    target_count_distribution = Counter()
+    max_dimension_distribution = Counter()
+    checked = 0
+
+    if exact:
+        masks = (subset_mask(points) for points in itertools.combinations(range(universe_size), subset_size))
+    else:
+        rng = random.Random(seed)
+        masks = (subset_mask(rng.sample(range(universe_size), subset_size)) for _ in range(samples))
+
+    for mask in masks:
+        checked += 1
+        target_count = sum(1 for flat in target_flats if mask & flat == flat)
+        target_count_distribution[target_count] += 1
+        for dimension in range(n, d - 1, -1):
+            if any(mask & flat == flat for flat in all_flats_by_dimension[dimension]):
+                max_dimension_distribution[dimension] += 1
+                break
+        else:
+            max_dimension_distribution[-1] += 1
+
+    return {
+        "m": m,
+        "quotient_dimension": n,
+        "target_dimension": d,
+        "subset_size": subset_size,
+        "exact": exact,
+        "checked": checked,
+        "total_subsets": total_subsets,
+        "target_count_distribution": target_count_distribution,
+        "max_dimension_distribution": max_dimension_distribution,
+    }
+
+
+def print_geometry_baseline(summary):
+    print(f"Dimension: Q_{summary['m']}")
+    print(f"Quotient dimension: {summary['quotient_dimension']}")
+    print(f"Target affine dimension: {summary['target_dimension']}")
+    print(f"Subset size: {summary['subset_size']}")
+    print(f"Exact: {summary['exact']}")
+    print(f"Subsets checked: {summary['checked']}")
+    print(f"Total subsets: {summary['total_subsets']}")
+    print("Target affine count distribution:")
+    for flat_count, count in sorted(summary["target_count_distribution"].items()):
+        print(f"  {flat_count}: {count}")
+    print("Max affine dimension distribution:")
+    for dimension, count in sorted(summary["max_dimension_distribution"].items()):
+        print(f"  {dimension}: {count}")
 
 
 def solve_no_affine_survivor(args):
@@ -602,6 +775,17 @@ def solve_no_affine_survivor_cubes(args):
 
 
 def run(args):
+    if args.geometry_baseline:
+        print_geometry_baseline(
+            geometry_baseline_summary(
+                args.m,
+                args.subset_size,
+                samples=args.geometry_samples,
+                seed=args.seed,
+                max_subsets=args.max_subsets,
+            )
+        )
+        return
     if args.sat_no_affine_survivor:
         solve_no_affine_survivor(args)
         return
@@ -622,7 +806,7 @@ def run(args):
 
     analyses = []
     for index, coloring in enumerate(colorings, start=1):
-        analysis = analyze_coloring(coloring, args.m)
+        analysis = analyze_coloring(coloring, args.m, compute_stabilizer=args.stabilizer)
         analyses.append(analysis)
         if args.show_first or not analysis["contains_target_affine"]:
             print(f"Model {index}")
@@ -651,14 +835,19 @@ def parse_args():
         action="store_true",
         help="Cube-and-conquer SAT search for a coloring with no target-dimensional affine survivor",
     )
+    mode.add_argument("--geometry-baseline", action="store_true", help="Analyze arbitrary quotient subsets of a fixed size")
     parser.add_argument("--max-edges", type=int, default=24, help="Maximum edge variables to enumerate exactly")
     parser.add_argument("--seed", type=int, default=20260520, help="Random seed")
     parser.add_argument("--show-first", action="store_true", help="Print every analyzed model")
+    parser.add_argument("--stabilizer", action="store_true", help="Compute stabilizers of the bicross set under quotient cube symmetries")
     parser.add_argument("--stop-on-failure", action="store_true", help="Stop after the first affine-survivor failure")
     parser.add_argument("--solver", default=None, help=solver_help())
     parser.add_argument("--hit-bound", type=int, help="Pair-hit lower bound for --sat-frontier")
     parser.add_argument("--models", type=int, default=20, help="SAT models to sample in --sat-frontier mode")
     parser.add_argument("--postcheck-limit", type=int, default=1000, help="Maximum SAT models to inspect in --sat-frontier mode")
+    parser.add_argument("--subset-size", type=int, help="Subset size for --geometry-baseline")
+    parser.add_argument("--geometry-samples", type=int, default=0, help="Random subset samples for --geometry-baseline; 0 means exact")
+    parser.add_argument("--max-subsets", type=int, default=250000, help="Maximum exact subsets for --geometry-baseline")
     parser.add_argument("--exact-hit", action="store_true", help="Only accept SAT models whose actual pair-hit count equals --hit-bound")
     parser.add_argument("--sort-zero-edges", action="store_true", help="SAT symmetry: sort colors incident to 00...0")
     parser.add_argument("--zero-red-degree-at-most-half", action="store_true", help="SAT symmetry: bound red degree at 00...0")
@@ -686,6 +875,8 @@ def parse_args():
     args = parser.parse_args()
     if args.sat_frontier and args.hit_bound is None:
         parser.error("--sat-frontier requires --hit-bound")
+    if args.geometry_baseline and args.subset_size is None:
+        parser.error("--geometry-baseline requires --subset-size")
     return args
 
 

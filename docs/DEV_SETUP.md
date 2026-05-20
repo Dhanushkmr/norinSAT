@@ -73,6 +73,7 @@ Useful Make targets:
 make bicross-q6-frontier
 make bicross-q6-cubes
 make group-structure-probes
+make group-geometry-baseline
 make group-affine-falsification
 make bicross-q6-hit31-proof
 make bicross-q6-hit30-proof
@@ -101,6 +102,8 @@ usage.
 
 `make group-structure-probes` replays the affine-survivor structure checks:
 exact Q3, the paired-coordinate construction, and Q6 frontier samples.
+`make group-geometry-baseline` compares those survivor sets with arbitrary
+subsets of the same quotient size.
 `make group-affine-falsification` runs the direct no-affine SAT negation for
 Q3-Q5 and a bounded Q6 cube pass on the current hard depth-12 frontier.
 

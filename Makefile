@@ -27,7 +27,7 @@ PY_SOURCES = \
 	enc/test_group_structure_probe.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers group-structure-probes group-affine-falsification bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -68,6 +68,12 @@ group-structure-probes:
 		--zero-red-degree-at-most-half \
 		--partial-sym-break 20 \
 		--stop-on-failure
+
+group-geometry-baseline:
+	$(PYTHON) enc/group_structure_probe.py -m 5 --geometry-baseline --subset-size 4 --max-subsets 1000000
+	$(PYTHON) enc/group_structure_probe.py -m 6 --geometry-baseline --subset-size 4 --max-subsets 1000000
+	$(PYTHON) enc/group_structure_probe.py -m 6 --geometry-baseline --subset-size 5 --max-subsets 1000000
+	$(PYTHON) enc/group_structure_probe.py -m 6 --geometry-baseline --subset-size 6 --geometry-samples 20000 --seed 20260521
 
 group-affine-falsification:
 	$(PYSAT_PYTHON) enc/group_structure_probe.py \

@@ -356,3 +356,27 @@ New best proof direction: component quotient structure should force an
 affine survivor in `F_2^m / <omega>`, which then gives the quantitative
 bicross lower bound.  The `Q_5` UNSAT result makes this a serious candidate
 lemma rather than just a pretty interpretation.
+
+Additional structure probes:
+
+- Exact frontier samples are much stronger than mere containment: the bicross
+  set itself is exactly one affine flat of the target dimension.
+- One step away from the frontier, the bicross set is no longer affine, but it
+  still contains target affine flats.
+- Arbitrary subsets of the quotient do not usually contain the needed flat, so
+  this is not just a counting effect.
+
+Useful replay:
+
+```bash
+make group-geometry-baseline
+```
+
+Current baseline results:
+
+```text
+F2^4, 4-subsets: 140/1820 are affine planes
+F2^5, 4-subsets: 1240/35960 are affine planes
+F2^5, 5-subsets: 34720/201376 contain an affine plane
+F2^5, random 6-subsets: about 9441/20000 contain an affine plane
+```

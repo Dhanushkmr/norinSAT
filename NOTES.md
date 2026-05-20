@@ -963,3 +963,46 @@ Affine-survivor experiments, 2026-05-20:
   affine survivor in `F_2^m/<omega>`.  The Q5 UNSAT result makes this stronger
   than a visual pattern, but Q6 still needs either a proof idea or a stronger
   encoding.
+- Stabilizer/frontier refinement: all sampled exact frontier bicross sets have
+  exactly one target affine flat, no larger affine flat, and the expected
+  translation stabilizer.
+
+  ```text
+  Q4 hit=6:  target flats=1, max affine dimension=1, translation stabilizer=2
+  Q5 hit=12: target flats=1, max affine dimension=2, translation stabilizer=4
+  Q6 hit=28: target flats=1, max affine dimension=2, translation stabilizer=4
+  ```
+
+- The Q6 frontier quotient-cube stabilizer is `192`, matching the paired
+  construction.  Q5 frontier stabilizer is `32`; Q4 frontier stabilizer is
+  `16`.
+- Near-frontier samples show where the stronger statement stops.  The bicross
+  set itself is no longer affine one step away from the frontier, but affine
+  survivors persist:
+
+  ```text
+  Q5 hit=11: target flats=1, max affine dimension=2, bicross set not affine
+  Q5 hit=10: target flats=3, max affine dimension=2, bicross set not affine
+  Q6 hit=27: target flats=1, max affine dimension=2, bicross set not affine
+  Q6 hit=26: target flats=3, max affine dimension=2, bicross set not affine
+  ```
+
+- Finite-geometry baseline: arbitrary quotient subsets of the same size usually
+  do not contain the needed flat.  So the affine survivor is not a counting
+  tautology.
+
+  ```text
+  F2^4, 4-subsets: 140/1820 are affine planes
+  F2^5, 4-subsets: 1240/35960 are affine planes
+  F2^5, 5-subsets: 34720/201376 contain an affine plane
+  F2^5, random 6-subsets: about 9441/20000 contain an affine plane
+  ```
+
+- Current sharpened statement:
+
+  ```text
+  At the extremal pair-hit frontier, the bicross survivor set is exactly
+  one affine flat of dimension floor((m - 1) / 2) in F_2^m/<omega>.
+  Away from the frontier, the exact-affine property fails, but affine
+  survivor containment persists in all tests.
+  ```
