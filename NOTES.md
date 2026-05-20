@@ -870,3 +870,41 @@ Shortest-separation/Tucker candidate:
 - Arbitrary antipodal signed-coordinate labelings of cube vertices do not force
   complementary adjacent labels, so the missing lemma must use the fact that
   the labels arise from shortest red/blue component separations.
+
+Group/category proof directions, 2026-05-20:
+
+- Added `docs/GROUP_CATEGORY_DIRECTIONS.md` to collect non-SAT proof ideas
+  from group theory, cohomology, additive combinatorics, and category theory.
+- View `Q_m` as the Cayley graph of `G = F_2^m`.  An edge coloring is a
+  function `c_i(x)`, and antipodes are translation by
+  `omega = e_0 + ... + e_{m-1}`.  The original antipodal edge condition is
+  the anti-periodicity equation `c_i(x + omega) = c_i(x) + 1`.
+- In the reduced bicross problem, connector colors become anti-periodic vertex
+  labelings `h(x + omega) = h(x) + 1`.  Thus the fixed-slice theorem says no
+  ordinary edge coloring can defeat every anti-periodic vertex labeling.
+- The paired-coordinate sharpness construction looks symplectic: for even
+  dimension it has the linear form `c_i(x)=B(x,e_i)` for the alternating
+  bilinear form pairing coordinates `(0,1), (2,3), ...`.
+- In that construction, bicross pairs are exactly the affine equations
+  `x_{2j}+x_{2j+1}=1`, modulo antipodes.  This explains the count
+  `2^floor((m-1)/2)` as the size of an affine survivor set in
+  `G/<omega>`.
+- New strongest candidate theorem to test:
+
+  ```text
+  Every coloring has a bicross-pair set containing an affine subspace
+  of dimension floor((m - 1) / 2) in G/<omega>.
+  ```
+
+  This may be false, but it is concrete and would explain the quantitative
+  formula better than pair-counting alone.
+- New probes to implement next: affine survivor detector, square-curvature
+  rank for edge-color cochains, Fourier concentration of untouched-pair sets,
+  stabilizers of bicross-pair sets under `Aut(Q_m)`, and a quotient/descent
+  test for component maps `(q_R,q_B)`.
+- Category-theoretic translation: red and blue components are quotient maps
+  `q_R,q_B`; incidence cells are fibers of `(q_R,q_B)`; a one-connector
+  witness is a nonempty pullback after slicing; a perfect inherited split is
+  descent data along a face map; a cell-star witness is an antipodal pair in
+  one fiber.  The branch lemma becomes a descent-or-fiber theorem for
+  connectivity quotients of products `[1]^m`.
