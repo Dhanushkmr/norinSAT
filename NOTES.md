@@ -1006,3 +1006,207 @@ Affine-survivor experiments, 2026-05-20:
   Away from the frontier, the exact-affine property fails, but affine
   survivor containment persists in all tests.
   ```
+
+Quotient/descent proof attempt, 2026-05-21:
+
+- The incidence quotient still looks like the right language.  Each vertex maps
+  to `(R(v), B(v))`; a bicross pair is an antipodal rectangle whose two
+  cross-cells are occupied, and an incidence cell containing both endpoints of
+  an antipodal pair gives bicross immediately.
+- The descent branch has a precise leak.  If a full obstruction descends
+  perfectly along a coordinate split, with slice colorings `C_0,C_1`, then the
+  inherited bad sets satisfy
+
+  ```text
+  Bad(C_0) union anti(Bad(C_1)) = Q_{m-1}
+  Bad(C_1) union anti(Bad(C_0)) = Q_{m-1}.
+  ```
+
+  Equivalently,
+
+  ```text
+  G(C_0) intersect anti(G(C_1)) = empty.
+  ```
+
+- Therefore perfect descent does not produce a smaller one-color bicross
+  counterexample.  It produces a two-color cross-obstruction.  The clean
+  induction invariant would be:
+
+  ```text
+  For all edge-colorings C,D of Q_m,
+  G(C) intersect anti(G(D)) is nonempty.
+  ```
+
+  The original bicross lemma is the special case `C = D`.
+- Quick checks: exhaustive dimensions 1, 2, and 3 satisfy this two-color
+  theorem; a direct SAT encoding proves the cross-cover negation UNSAT in
+  `Q_4`.  A quick `Q_6` run was inconclusive, not a counterexample.
+- Updated proof target: the branch statement must be
+  `cell-star or descent into the two-color cross theorem`, or else replaced
+  by a direct incidence-rectangle theorem that avoids the descent leak.
+
+Two-color cross experiments, 2026-05-21:
+
+- Added `enc/two_color_cross_probe.py` and `make two-color-cross-probes`.
+  The probe has two modes:
+
+  ```text
+  --sat-negation       search for two colorings C,D with
+                       G(C) intersect anti(G(D)) = empty
+  --cover-paired-left  fix C to the paired-coordinate construction and ask
+                       whether some D can make anti(G(C)) bad
+  ```
+
+- Exact distinct-bad-set enumeration proves the two-color cross theorem for
+  `Q_1,Q_2,Q_3`.  The number of distinct bad sets is:
+
+  ```text
+  Q1: 1
+  Q2: 5
+  Q3: 25
+  ```
+
+- Direct SAT proves the full two-color cross-cover negation UNSAT for:
+
+  ```text
+  Q4: UNSAT
+  Q5: UNSAT with 200k conflict budget, symmetry on the first coloring
+  ```
+
+- A direct `Q_6` full two-color cross-cover SAT run with first-coloring
+  symmetry and a 1M conflict budget returned UNKNOWN.
+- Fixed-left paired construction test: no coloring can cover the paired
+  construction's antipodal good set through `Q_6`:
+
+  ```text
+  Q4 target size  9: UNSAT
+  Q5 target size 18: UNSAT
+  Q6 target size 27: UNSAT
+  Q7 target size 54: UNKNOWN at 1M conflicts
+  ```
+
+- Interpretation: the two-color descent invariant is now stronger than a
+  scratch conjecture.  It is verified through `Q_5` in full and through
+  `Q_6` for the sharp paired-coordinate frontier target.  The next compute
+  step is a cube-and-conquer version of `--sat-negation` for `Q_6`, or a
+  specialized proof/encoding for fixed paired-left targets.
+
+Two-color cube/product follow-up, 2026-05-21:
+
+- Added `enc/two_color_cross_cube_search.py` and `make two-color-cross-cubes`.
+  It cubes the full two-color cross-cover negation on first-coloring edge
+  variables, where the symmetry breaks act.
+- Q6 full two-color cross-cover cube replay with first-coloring symmetry:
+
+  ```text
+  depth 6,  200k conflicts: 60/64 UNSAT, UNKNOWN 0-1,3,7
+  depth 8,  200k conflicts on descendants: 15/24 UNSAT,
+                                 UNKNOWN 0-1,3-5,7,28-29,31
+  depth 10, 200k conflicts on descendants: 19/36 UNSAT,
+                                 UNKNOWN 0-1,3,7,15-17,19,23,31,
+                                         115-117,119,124-125,127
+  depth 12, 100k conflicts on descendants: 27/68 UNSAT,
+                                 UNKNOWN 0-3,6-7,14-15,30-31,63,
+                                         66-71,76-79,92-95,125,127,
+                                         462-467,470-471,478-479,
+                                         497,499,503,511
+  ```
+
+  No SAT model appeared.  The hard region is again highly concentrated near
+  low prefix patterns, like the earlier bicross frontier cube runs.
+- Product-target experiment: for each paired coordinate block, choose one of
+  `00,01,10,11` as forbidden and force every vertex avoiding the forbidden
+  state in every block to be bad.  This is a `3^k`-sized target, with the
+  odd leftover coordinate free.  Every such target is impossible through Q6:
+
+  ```text
+  Q4: 16/16 targets UNSAT
+  Q5: 16/16 targets UNSAT
+  Q6: 64/64 targets UNSAT
+  ```
+
+- This suggests a narrower human-scale lemma:
+
+  ```text
+  No coloring of Q_m has Bad containing a product set that keeps
+  three states out of four in each paired coordinate block.
+  ```
+
+  The paired-coordinate frontier obstruction is one instance of this product
+  target.  Proving this would not prove the full two-color theorem, but it
+  would explain why the sharp symplectic/paired construction cannot appear as
+  one side of a descent obstruction.
+
+## Wild proof directions
+
+These are deliberately more speculative than the SAT-backed frontier notes.
+The goal is to find proof languages that explain why bicross survivors keep
+forming affine flats instead of treating the affine pattern as a coincidence.
+
+1. Finite-geometry blocking sets.  Work in the antipodal quotient
+   `F_2^m/<omega>`.  If no affine survivor of the predicted dimension exists,
+   then the projected bad set is a blocking set: it must hit every target
+   affine flat.  Finite-geometry blocking-set theorems may force such a set
+   to look hyperplane-like, which would match the inherited-slice branch of
+   the current proof picture.
+
+2. Reed-Muller and polynomial method.  Represent the bicross survivor
+   indicator as a Boolean function on the quotient.  The affine-survivor
+   theorem says this function is nonzero on an entire affine flat of dimension
+   `floor((m - 1) / 2)`.  If component reachability imposes low-degree
+   structure, Reed-Muller duality, Chevalley-Warning, or a cube version of
+   Combinatorial Nullstellensatz might force such a flat.
+
+3. Median-graph and Helly methods.  The hypercube is a median graph.  Red and
+   blue components need not be convex, but their gated hulls, interval hulls,
+   or median closures may satisfy Helly-type constraints.  A possible route is
+   to prove bicross after passing to hulls, then show the hull witness can be
+   pulled back to actual monochromatic components.
+
+4. Hex or strategy-stealing formulation.  A missing bicross witness can be
+   interpreted as a two-phase reachability separator: no red-then-blue route
+   and no blue-then-red route across an antipodal pair.  The cube with
+   antipodal boundary has a self-dual flavor similar to Hex, so a separator
+   strategy may contradict the dual separator forced by the opposite color.
+
+5. Equivariant nerve or Tucker lemma.  Build a nerve from red and blue
+   component covers, with the antipodal map acting on the indexing complex.
+   A failed bicross/affine-survivor statement should produce an equivariant
+   map into a low-index complex.  The hope is a Tucker/Borsuk-Ulam obstruction,
+   but using labels that come from component separations rather than arbitrary
+   signed coordinates.
+
+6. Categorical descent.  View red and blue component quotients as cosheaves on
+   the cube face category.  The two observed outcomes then look like a descent
+   dichotomy: either the coloring descends cleanly along some coordinate split
+   (the inherited-slice branch), or the product quotient has a fixed fiber
+   containing an antipodal affine block (the cell-star branch).
+
+7. Incidence rectangles and concept lattices.  Put each vertex into the cell
+   `(R(v), B(v))` of the red-component by blue-component incidence matrix.
+   Bicross is exactly an antipodal rectangle-completion phenomenon.  Formal
+   concept analysis or forbidden-rectangle theorems with bounded cube VC
+   dimension may turn the empirical cell-star pattern into a theorem.
+
+8. Entropy and junta structure.  A no-affine-survivor bad set has to block
+   many affine flats, which looks high-complexity.  Component reachability may
+   force low influence or junta-like behavior in some coordinate split.  That
+   would explain why unresolved cases keep drifting back toward inherited
+   lower-dimensional structure.
+
+9. Harmonic/electrical picture.  Treat badness as a potential separating each
+   vertex from its antipode in the red-blue reachability graph.  Energy or
+   flow duality on the cube may force either a low-energy affine survivor or a
+   coordinate with nearly all current, again pointing to the dichotomy.
+
+10. Binary matroid language.  The quotient geometry is a binary matroid.  The
+    survivor flat is a flat of this matroid, while a bad set hitting all such
+    flats is a blocking object with a critical-number flavor.  Matroid
+    blocking and density theorems may give a cleaner extremal statement than
+    the raw cube formulation.
+
+Most concrete next experiment: add a blocking-set analyzer for
+`pi(Bad) subset F_2^m/<omega>`.  For frontier and near-frontier models, measure
+whether `pi(Bad)` contains or is close to hyperplanes, whether it is a minimal
+blocking set for the target affine flats, and whether the residual obstruction
+is exactly the paired-coordinate/symplectic construction in disguise.

@@ -250,7 +250,11 @@ rejects it for cube runners.
 
 1. Prove a dichotomy lemma: if `Bad` hits many antipodal pairs, then either
    there is a perfect inherited slice or one incidence cell contains an
-   antipodal pair.
+   antipodal pair.  For a full induction, pair this with the two-color
+   cross-bicross theorem: for any two colorings `C,D` of `Q_m`,
+   `G(C) intersect anti(G(D))` should be nonempty.  Perfect inheritance
+   naturally descends to that two-color statement, not directly to the original
+   one-color bicross lemma.
 2. Relate missing target cells `(R(x), B(anti(x)))` to occupied cells
    `(R(x), B(x))`; the Q6 extremal has many bad vertices compressed into only a
    few missing target cells.

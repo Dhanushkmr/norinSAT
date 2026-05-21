@@ -282,6 +282,23 @@ connectors are not forced, so the likely proof shape is a cleaner dichotomy:
 near-obstructions either reduce to a smaller cube through perfect bad-set
 inheritance or force an incidence-cell bicross pair.
 
+A quotient/descent proof attempt on 2026-05-21 found the exact induction gap:
+perfect bad-set inheritance does not descend to another one-color bicross
+counterexample.  It descends to a two-color cross-cover condition.  For slice
+colorings `C_0,C_1`, the needed inherited obstruction is
+`G(C_0) intersect anti(G(C_1)) = empty`, where
+`G(C) = {x : R_C(x) intersects B_C(anti(x))}`.  Thus the descent route would
+close if one proves the stronger two-color theorem that
+`G(C) intersect anti(G(D))` is nonempty for every pair of colorings `C,D`.
+The theorem specializes to the bicross lemma when `C = D`; exhaustive checks
+through `Q_3`, direct SAT checks through `Q_5`, and a bounded `Q_6`
+cube replay support it.  The full `Q_6` cube replay has no SAT signal so far:
+depth 6 proves 60/64 cubes UNSAT, and a depth-12 descendant pass leaves 41
+UNKNOWN cubes but still no model.  A narrower product-target lemma is now the
+most concrete human-scale target: no bad set appears able to contain a product
+set that keeps three of the four states in every paired coordinate block.  This
+product-target statement is SAT-UNSAT for all such targets through `Q_6`.
+
 The current falsification target is the conjunction `high pair-hit + no cell
 antipodal pair + no perfect inherited split`.  It is UNSAT for the Q4 frontier,
 has produced no genuine Q5 counterexample after 5,000 post-checked SAT models,

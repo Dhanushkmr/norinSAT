@@ -14,6 +14,8 @@ PY_SOURCES = \
 	enc/bicross_extremal_analysis.py \
 	enc/bad_set_structure.py \
 	enc/bicross_frontier_construction.py \
+	enc/two_color_cross_probe.py \
+	enc/two_color_cross_cube_search.py \
 	enc/group_structure_probe.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
@@ -24,10 +26,12 @@ PY_SOURCES = \
 	enc/test_bicross_cube_search.py \
 	enc/test_bicross_extremal_analysis.py \
 	enc/test_bicross_frontier_construction.py \
+	enc/test_two_color_cross_probe.py \
+	enc/test_two_color_cross_cube_search.py \
 	enc/test_group_structure_probe.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification two-color-cross-probes two-color-cross-cubes bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -36,6 +40,8 @@ test:
 	$(PYTHON) enc/test_bicross_cube_search.py
 	$(PYTHON) enc/test_bicross_extremal_analysis.py
 	$(PYTHON) enc/test_bicross_frontier_construction.py
+	$(PYTHON) enc/test_two_color_cross_probe.py
+	$(PYTHON) enc/test_two_color_cross_cube_search.py
 	$(PYTHON) enc/test_group_structure_probe.py
 	$(PYTHON) enc/test_sat_portfolio.py
 	$(PYTHON) enc/test_component_chain_classifier.py
@@ -46,6 +52,8 @@ test-sat:
 	$(PYSAT_PYTHON) enc/test_bicross_cube_search.py
 	$(PYSAT_PYTHON) enc/test_bicross_extremal_analysis.py
 	$(PYSAT_PYTHON) enc/test_bicross_frontier_construction.py
+	$(PYSAT_PYTHON) enc/test_two_color_cross_probe.py
+	$(PYSAT_PYTHON) enc/test_two_color_cross_cube_search.py
 	$(PYSAT_PYTHON) enc/test_group_structure_probe.py
 	$(PYSAT_PYTHON) enc/test_sat_portfolio.py
 	$(PYSAT_PYTHON) enc/test_component_chain_classifier.py
@@ -99,6 +107,49 @@ group-affine-falsification:
 		--only-cube-indexes 0-3,6-7,14-15,30-31,66-71,76-79,92-95,125,198-203,206-207,216-219,222-223,249,251,462-467,470-471,478-479,497,499,503 \
 		--jobs $(JOBS) \
 		--batch-size 2 \
+		--conflict-budget 200000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+
+two-color-cross-probes:
+	$(PYTHON) enc/two_color_cross_probe.py -m 1 --enumerate-badsets
+	$(PYTHON) enc/two_color_cross_probe.py -m 2 --enumerate-badsets
+	$(PYTHON) enc/two_color_cross_probe.py -m 3 --enumerate-badsets
+	$(PYSAT_PYTHON) enc/two_color_cross_probe.py \
+		-m 4 \
+		--sat-negation \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 8
+	$(PYSAT_PYTHON) enc/two_color_cross_probe.py \
+		-m 5 \
+		--sat-negation \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20 \
+		--conflict-budget 200000
+	$(PYSAT_PYTHON) enc/two_color_cross_probe.py \
+		-m 6 \
+		--cover-paired-left
+	$(PYSAT_PYTHON) enc/two_color_cross_probe.py \
+		-m 6 \
+		--cover-product-targets \
+		--conflict-budget 200000 \
+		--report-every 16
+	-$(PYSAT_PYTHON) enc/two_color_cross_probe.py \
+		-m 7 \
+		--cover-paired-left \
+		--conflict-budget 1000000
+
+two-color-cross-cubes:
+	-$(PYSAT_PYTHON) enc/two_color_cross_cube_search.py \
+		-m 6 \
+		--cube-depth 6 \
+		--cube-mode prefix \
+		--jobs $(JOBS) \
+		--batch-size 4 \
 		--conflict-budget 200000 \
 		--stop-on-sat \
 		--sort-zero-edges \

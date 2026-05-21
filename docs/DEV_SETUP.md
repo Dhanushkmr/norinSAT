@@ -107,6 +107,13 @@ subsets of the same quotient size.
 `make group-affine-falsification` runs the direct no-affine SAT negation for
 Q3-Q5 and a bounded Q6 cube pass on the current hard depth-12 frontier.
 
+`make two-color-cross-probes` replays the two-color descent invariant checks:
+exact distinct-bad-set enumeration for Q1-Q3, direct SAT negation for Q4-Q5,
+the fixed paired-left target through Q6, all Q6 paired-block product targets,
+and a bounded Q7 paired-left stress test.
+`make two-color-cross-cubes` runs the first Q6 cube-and-conquer pass for the
+full two-color cross-cover negation.
+
 `make bicross-extremal-shapes` samples exact Q4, Q5, and Q6 pair-hit frontier
 models and prints aggregate component-incidence signatures.  This is the
 fastest way to replay the current non-compute proof clue.

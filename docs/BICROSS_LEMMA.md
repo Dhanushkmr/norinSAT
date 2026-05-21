@@ -601,6 +601,89 @@ Current observations:
   hitting every antipodal pair, then some coordinate split should expose two
   lower-dimensional bad sets that also come close to hitting every pair.
 
+### Quotient/Descent Gap
+
+The incidence-quotient route clarifies the induction interface but does not
+yet close the proof.
+
+Let
+
+```text
+G(C) = {x : R_C(x) intersects B_C(anti(x))}
+Bad(C) = Q_m \ G(C).
+```
+
+If a full obstruction descends perfectly along a coordinate split, with slice
+colorings `C_0` and `C_1`, then the two projected full bad sets are exactly
+`Bad(C_0)` and `Bad(C_1)`.  Since the full bad set hits every full
+antipodal pair, the slices satisfy the cross-cover conditions
+
+```text
+Bad(C_0) union anti(Bad(C_1)) = Q_{m-1}
+Bad(C_1) union anti(Bad(C_0)) = Q_{m-1}.
+```
+
+Equivalently,
+
+```text
+G(C_0) intersect anti(G(C_1)) = empty.
+```
+
+This is the real gap: perfect descent does not produce a smaller one-color
+bicross counterexample.  It produces a two-color cross-obstruction.
+
+So a clean descent induction would need the stronger theorem:
+
+```text
+For all two edge-colorings C,D of Q_m,
+G(C) intersect anti(G(D)) is nonempty.
+```
+
+Taking `C = D` recovers the bicross lemma, but the descent branch genuinely
+needs the two-color statement.  Exhaustive checks in dimensions 1, 2, and 3
+and a direct SAT encoding in `Q_4` support the two-color theorem.  A quick
+`Q_6` SAT attempt was inconclusive rather than a counterexample.
+
+The reusable probe is `enc/two_color_cross_probe.py`.  Current results:
+
+```text
+Full two-color theorem:
+  Q1,Q2,Q3: exact distinct-bad-set enumeration, no cross-cover
+  Q4:       SAT negation UNSAT
+  Q5:       SAT negation UNSAT with 200k conflicts
+  Q6:       UNKNOWN at 1M conflicts
+
+Fixed paired-coordinate left side:
+  Q4 target size  9: UNSAT
+  Q5 target size 18: UNSAT
+  Q6 target size 27: UNSAT
+  Q7 target size 54: UNKNOWN at 1M conflicts
+```
+
+This makes the next proof/computation target concrete: either prove the
+two-color theorem directly, or build a cube-and-conquer negation for `Q_6`
+to stress-test it beyond the direct solver.
+
+Follow-up cube/product checks:
+
+```text
+Q6 full two-color cube replay:
+  depth 6:  60/64 UNSAT, no SAT, UNKNOWN 0-1,3,7
+  depth 8:  15/24 selected descendants UNSAT, no SAT
+  depth 10: 19/36 selected descendants UNSAT, no SAT
+  depth 12: 27/68 selected descendants UNSAT, no SAT
+
+Product targets avoiding one state per coordinate pair:
+  Q4: 16/16 UNSAT
+  Q5: 16/16 UNSAT
+  Q6: 64/64 UNSAT
+```
+
+The product-target result suggests a smaller theorem: a bad set cannot contain
+a product set that keeps three of the four states in every paired coordinate
+block.  This is exactly the shape needed to rule out the paired-coordinate
+frontier as one side of a two-color descent obstruction.
+
 ## One-Switch Geodesic Route
 
 If there is an antipodal geodesic from `x` to `anti(x)` whose edge colors are
