@@ -175,10 +175,12 @@ two-color-cross-adaptive-cubes:
 
 two-color-product-holes:
 	$(PYSAT_PYTHON) enc/two_color_product_hole_analysis.py -m 4 --hole-count 2
+	$(PYSAT_PYTHON) enc/two_color_product_hole_analysis.py -m 5 --hole-count 4 --hide-unsat-orbits
 	-$(PYSAT_PYTHON) enc/two_color_product_hole_analysis.py \
 		-m 6 \
 		--hole-count 2 \
-		--conflict-budget 500000
+		--conflict-budget 500000 \
+		--hide-unsat-orbits
 
 bicross-quantitative-construction:
 	$(PYTHON) enc/bicross_frontier_construction.py -m 8 --show-components

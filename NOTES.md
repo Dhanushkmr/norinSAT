@@ -1154,16 +1154,21 @@ Two-color cube/product follow-up, 2026-05-21:
   Q6: |P|=27, max bad in P = 25
   ```
 
-  The Q6 two-hole orbit classification is sharper.  Up to the symmetry of
-  the product box, there are 20 unordered two-hole orbits.  With a 500k
-  conflict budget per orbit, exactly one orbit is SAT: the orbit whose holes
-  are an antipodal pair in the middle flat `{01,10}^3`, for example
-  `010101,101010`.  All other two-hole orbits are UNSAT.  Thus a Q6 coloring
-  can cover 25 of the 27 vertices in `P`, but the only extremal shape seen by
-  the orbit solver leaves a middle antipodal pair.  The tempting stronger
-  statement that the middle flat itself must meet `G(C)` is false in Q6:
-  all eight middle vertices can be forced bad, although then the full product
-  box has seven good vertices.
+  The near-cover orbit classifications are sharper:
+
+  ```text
+  Q4: 8 two-hole orbits; exactly one SAT, the antipodal middle-pair orbit
+  Q5: 238 four-hole orbits; exactly one SAT, two antipodal middle pairs
+  Q6: 20 two-hole orbits; exactly one SAT, the antipodal middle-pair orbit
+  ```
+
+  Thus a Q6 coloring can cover 25 of the 27 vertices in `P`, but the only
+  extremal shape seen by the orbit solver leaves a middle antipodal pair such
+  as `010101,101010`.  The Q5 extremal leaves the doubled odd-dimensional
+  version, e.g. `01010,01011,10100,10101`.  The tempting stronger statement
+  that the middle flat itself must meet `G(C)` is false in Q6: all eight
+  middle vertices can be forced bad, although then the full product box has
+  seven good vertices.
 
   Representative extremal SAT models are even more structured: in Q4 and Q6,
   when `P` is covered up to the two middle antipodal holes, the entire good
@@ -1174,6 +1179,13 @@ Two-color cube/product follow-up, 2026-05-21:
   Q4 good set: pairs (0,3),(1,2), forbidden states 11,11
   Q6 good set: pairs (0,3),(1,5),(2,4), forbidden states 11,11,11
   ```
+
+  Q7 now has a matching extremal witness in the canonical product box:
+  forcing 50 of 54 vertices bad is SAT, with the four good product-box
+  vertices exactly `0101010,0101011,1010100,1010101`.  The next lower-bound
+  question remains open computationally: forcing at least 51 of the 54
+  product-box vertices bad returned UNKNOWN at 1M conflicts, and three fixed
+  three-hole near-covers also returned UNKNOWN at 1M.
 
 - This suggests a narrower human-scale lemma:
 

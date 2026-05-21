@@ -681,8 +681,9 @@ Product targets avoiding one state per coordinate pair:
   Q6: 64/64 UNSAT
   Q7: representative targets UNKNOWN at 1M conflicts
 
-Canonical product-box two-hole classification:
+Canonical product-box near-cover classification:
   Q4: 8 two-hole orbits; only the antipodal middle-pair orbit is SAT
+  Q5: 238 four-hole orbits; only the doubled antipodal middle orbit is SAT
   Q6: 20 two-hole orbits; only the antipodal middle-pair orbit is SAT
 ```
 
@@ -698,9 +699,17 @@ antipodal pair in the middle flat `{01,10}^3`.  The middle flat alone is not
 the theorem: all eight middle vertices can be forced bad in Q6.  The full
 three-of-four product geometry is doing the work.
 
+The Q5 odd-dimensional doubled box has the analogous unique four-hole orbit:
+two antipodal middle pairs, such as `01010,01011,10100,10101`.
+
 One representative Q6 extremal is product-like on both sides: its whole good
 set is another 27-vertex product target under the crossed pairing
 `(0,3),(1,5),(2,4)`, avoiding `11` in each crossed pair.
+
+For Q7, the predicted four-hole extremal is SAT: 50 of the 54 canonical
+product-box vertices can be bad, leaving exactly
+`0101010,0101011,1010100,1010101`.  Forcing 51 bad vertices is still UNKNOWN
+at 1M conflicts.
 
 ## One-Switch Geodesic Route
 

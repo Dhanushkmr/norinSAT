@@ -11,6 +11,12 @@ class TwoColorProductHoleAnalysisTests(unittest.TestCase):
         self.assertEqual(len(orbits), 8)
         self.assertEqual(sum(len(members) for members in orbits.values()), 36)
 
+    def test_q5_four_hole_orbit_count(self):
+        orbits = hole_orbits(5, 4)
+
+        self.assertEqual(len(orbits), 238)
+        self.assertEqual(sum(len(members) for members in orbits.values()), 3060)
+
 
 class OptionalSatTwoColorProductHoleAnalysisTests(unittest.TestCase):
     def test_q4_two_hole_sat_orbit_is_antipodal(self):
@@ -30,6 +36,19 @@ class OptionalSatTwoColorProductHoleAnalysisTests(unittest.TestCase):
         for result in results:
             if result.result is False:
                 self.assertFalse(result.antipodal_pair)
+
+    def test_q5_four_hole_sat_orbit_is_antipodal_closed(self):
+        try:
+            import pysat  # noqa: F401
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"optional python-sat dependency unavailable: {exc}")
+
+        results = analyze_hole_orbits(5, 4)
+        sat_results = [result for result in results if result.result is True]
+
+        self.assertEqual(len(sat_results), 1)
+        self.assertTrue(sat_results[0].antipodal_closed)
+        self.assertFalse(sat_results[0].antipodal_pair)
 
 
 if __name__ == "__main__":
