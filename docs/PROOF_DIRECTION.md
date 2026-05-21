@@ -292,12 +292,22 @@ close if one proves the stronger two-color theorem that
 `G(C) intersect anti(G(D))` is nonempty for every pair of colorings `C,D`.
 The theorem specializes to the bicross lemma when `C = D`; exhaustive checks
 through `Q_3`, direct SAT checks through `Q_5`, and a bounded `Q_6`
-cube replay support it.  The full `Q_6` cube replay has no SAT signal so far:
-depth 6 proves 60/64 cubes UNSAT, and a depth-12 descendant pass leaves 41
-UNKNOWN cubes but still no model.  A narrower product-target lemma is now the
+cube replay support it.  The corrected full `Q_6` adaptive cube replay has no
+SAT signal so far: depth 6 proves 60/64 cubes UNSAT, and a depth-14 descendant
+pass proves 84/232 selected descendants UNSAT while leaving 148 UNKNOWN cubes.
+Continuing those UNKNOWN branches to depth 16 proved 209/592 descendants UNSAT
+and left 383 UNKNOWN, still with no SAT cube.
+A narrower product-target lemma is now the
 most concrete human-scale target: no bad set appears able to contain a product
 set that keeps three of the four states in every paired coordinate block.  This
-product-target statement is SAT-UNSAT for all such targets through `Q_6`.
+product-target statement is SAT-UNSAT for all such targets through `Q_6`, while
+representative `Q_7` product targets are still UNKNOWN at 1M conflicts.  The
+Q6 canonical product box now has an extremal classification: 25 of its 27
+vertices can be bad, but the only SAT two-hole orbit leaves an antipodal pair
+in the middle flat `{01,10}^3`; all other two-hole orbits are UNSAT at a
+500k conflict budget.  A representative extremal model has its whole good set
+as another product target under the crossed pairing
+`(0,3),(1,5),(2,4)`, avoiding `11` in each crossed pair.
 
 The current falsification target is the conjunction `high pair-hit + no cell
 antipodal pair + no perfect inherited split`.  It is UNSAT for the Q4 frontier,

@@ -1093,27 +1093,40 @@ Two-color cross experiments, 2026-05-21:
 
 Two-color cube/product follow-up, 2026-05-21:
 
-- Added `enc/two_color_cross_cube_search.py` and `make two-color-cross-cubes`.
-  It cubes the full two-color cross-cover negation on first-coloring edge
-  variables, where the symmetry breaks act.
-- Q6 full two-color cross-cover cube replay with first-coloring symmetry:
+- Added `enc/two_color_cross_cube_search.py`,
+  `enc/two_color_cross_adaptive_cube_search.py`, `make two-color-cross-cubes`,
+  and `make two-color-cross-adaptive-cubes`.  These cube the full two-color
+  cross-cover negation on first-coloring edge variables, where the symmetry
+  breaks act.
+- Corrected adaptive Q6 full two-color cross-cover cube replay with
+  first-coloring symmetry:
 
   ```text
   depth 6,  200k conflicts: 60/64 UNSAT, UNKNOWN 0-1,3,7
-  depth 8,  200k conflicts on descendants: 15/24 UNSAT,
-                                 UNKNOWN 0-1,3-5,7,28-29,31
-  depth 10, 200k conflicts on descendants: 19/36 UNSAT,
+  depth 8,  200k conflicts on descendants: 4/16 UNSAT,
+                                 UNKNOWN 0-1,3-5,7,12-13,15,28-29,31
+  depth 10, 200k conflicts on descendants: 24/48 UNSAT,
                                  UNKNOWN 0-1,3,7,15-17,19,23,31,
+                                         49-51,54-55,62-63,
                                          115-117,119,124-125,127
-  depth 12, 100k conflicts on descendants: 27/68 UNSAT,
+  depth 12, 200k conflicts on descendants: 38/96 UNSAT,
                                  UNKNOWN 0-3,6-7,14-15,30-31,63,
                                          66-71,76-79,92-95,125,127,
+                                         198-203,206-207,216-219,222-223,
+                                         249,251,255,
                                          462-467,470-471,478-479,
                                          497,499,503,511
+  depth 14, 200k conflicts on descendants: 84/232 UNSAT,
+                                 UNKNOWN count 148, no SAT
+  depth 16, 200k conflicts on descendants: 209/592 UNSAT,
+                                 UNKNOWN count 383, no SAT
   ```
 
   No SAT model appeared.  The hard region is again highly concentrated near
-  low prefix patterns, like the earlier bicross frontier cube runs.
+  low prefix patterns, like the earlier bicross frontier cube runs.  The
+  earlier hand-expanded depth-8/depth-10/depth-12 replay used a wrong
+  descendant range for one branch; the adaptive run above is the authoritative
+  prefix-cube record.
 - Product-target experiment: for each paired coordinate block, choose one of
   `00,01,10,11` as forbidden and force every vertex avoiding the forbidden
   state in every block to be bad.  This is a `3^k`-sized target, with the
@@ -1123,6 +1136,43 @@ Two-color cube/product follow-up, 2026-05-21:
   Q4: 16/16 targets UNSAT
   Q5: 16/16 targets UNSAT
   Q6: 64/64 targets UNSAT
+  ```
+
+  Q7 is currently beyond the direct target encoding: three representative
+  product targets of size 54 all returned UNKNOWN at 1M conflicts, including
+  the paired-left target with forbidden block `11,11,11`.
+
+- Added `enc/two_color_product_hole_analysis.py` and
+  `make two-color-product-holes` to classify near-cover holes in the
+  canonical product box `P={no paired block is 00}`.  Max-bad checks give:
+
+  ```text
+  Q2: |P|=3,  max bad in P = 1
+  Q3: |P|=6,  max bad in P = 2
+  Q4: |P|=9,  max bad in P = 7
+  Q5: |P|=18, max bad in P = 14
+  Q6: |P|=27, max bad in P = 25
+  ```
+
+  The Q6 two-hole orbit classification is sharper.  Up to the symmetry of
+  the product box, there are 20 unordered two-hole orbits.  With a 500k
+  conflict budget per orbit, exactly one orbit is SAT: the orbit whose holes
+  are an antipodal pair in the middle flat `{01,10}^3`, for example
+  `010101,101010`.  All other two-hole orbits are UNSAT.  Thus a Q6 coloring
+  can cover 25 of the 27 vertices in `P`, but the only extremal shape seen by
+  the orbit solver leaves a middle antipodal pair.  The tempting stronger
+  statement that the middle flat itself must meet `G(C)` is false in Q6:
+  all eight middle vertices can be forced bad, although then the full product
+  box has seven good vertices.
+
+  Representative extremal SAT models are even more structured: in Q4 and Q6,
+  when `P` is covered up to the two middle antipodal holes, the entire good
+  set has size `|P|` and is itself a product target for a crossed coordinate
+  pairing, avoiding `11` in every crossed pair.  The models found:
+
+  ```text
+  Q4 good set: pairs (0,3),(1,2), forbidden states 11,11
+  Q6 good set: pairs (0,3),(1,5),(2,4), forbidden states 11,11,11
   ```
 
 - This suggests a narrower human-scale lemma:

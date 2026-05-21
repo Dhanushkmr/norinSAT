@@ -668,21 +668,39 @@ Follow-up cube/product checks:
 
 ```text
 Q6 full two-color cube replay:
-  depth 6:  60/64 UNSAT, no SAT, UNKNOWN 0-1,3,7
-  depth 8:  15/24 selected descendants UNSAT, no SAT
-  depth 10: 19/36 selected descendants UNSAT, no SAT
-  depth 12: 27/68 selected descendants UNSAT, no SAT
+  depth 6:  60/64 selected cubes UNSAT, no SAT
+  depth 8:   4/16 selected descendants UNSAT, no SAT
+  depth 10: 24/48 selected descendants UNSAT, no SAT
+  depth 12: 38/96 selected descendants UNSAT, no SAT
+  depth 14: 84/232 selected descendants UNSAT, no SAT
+  depth 16: 209/592 selected descendants UNSAT, no SAT
 
 Product targets avoiding one state per coordinate pair:
   Q4: 16/16 UNSAT
   Q5: 16/16 UNSAT
   Q6: 64/64 UNSAT
+  Q7: representative targets UNKNOWN at 1M conflicts
+
+Canonical product-box two-hole classification:
+  Q4: 8 two-hole orbits; only the antipodal middle-pair orbit is SAT
+  Q6: 20 two-hole orbits; only the antipodal middle-pair orbit is SAT
 ```
 
 The product-target result suggests a smaller theorem: a bad set cannot contain
 a product set that keeps three of the four states in every paired coordinate
 block.  This is exactly the shape needed to rule out the paired-coordinate
 frontier as one side of a two-color descent obstruction.
+
+The two-hole classification makes this target more concrete.  In the Q6
+canonical box `P={no paired block is 00}`, one coloring can force 25 of the 27
+vertices bad, but the two holes must, up to product-box symmetry, be an
+antipodal pair in the middle flat `{01,10}^3`.  The middle flat alone is not
+the theorem: all eight middle vertices can be forced bad in Q6.  The full
+three-of-four product geometry is doing the work.
+
+One representative Q6 extremal is product-like on both sides: its whole good
+set is another 27-vertex product target under the crossed pairing
+`(0,3),(1,5),(2,4)`, avoiding `11` in each crossed pair.
 
 ## One-Switch Geodesic Route
 

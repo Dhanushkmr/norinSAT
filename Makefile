@@ -16,6 +16,8 @@ PY_SOURCES = \
 	enc/bicross_frontier_construction.py \
 	enc/two_color_cross_probe.py \
 	enc/two_color_cross_cube_search.py \
+	enc/two_color_cross_adaptive_cube_search.py \
+	enc/two_color_product_hole_analysis.py \
 	enc/group_structure_probe.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
@@ -28,10 +30,11 @@ PY_SOURCES = \
 	enc/test_bicross_frontier_construction.py \
 	enc/test_two_color_cross_probe.py \
 	enc/test_two_color_cross_cube_search.py \
+	enc/test_two_color_product_hole_analysis.py \
 	enc/test_group_structure_probe.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification two-color-cross-probes two-color-cross-cubes bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification two-color-cross-probes two-color-cross-cubes two-color-cross-adaptive-cubes two-color-product-holes bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -42,6 +45,7 @@ test:
 	$(PYTHON) enc/test_bicross_frontier_construction.py
 	$(PYTHON) enc/test_two_color_cross_probe.py
 	$(PYTHON) enc/test_two_color_cross_cube_search.py
+	$(PYTHON) enc/test_two_color_product_hole_analysis.py
 	$(PYTHON) enc/test_group_structure_probe.py
 	$(PYTHON) enc/test_sat_portfolio.py
 	$(PYTHON) enc/test_component_chain_classifier.py
@@ -54,6 +58,7 @@ test-sat:
 	$(PYSAT_PYTHON) enc/test_bicross_frontier_construction.py
 	$(PYSAT_PYTHON) enc/test_two_color_cross_probe.py
 	$(PYSAT_PYTHON) enc/test_two_color_cross_cube_search.py
+	$(PYSAT_PYTHON) enc/test_two_color_product_hole_analysis.py
 	$(PYSAT_PYTHON) enc/test_group_structure_probe.py
 	$(PYSAT_PYTHON) enc/test_sat_portfolio.py
 	$(PYSAT_PYTHON) enc/test_component_chain_classifier.py
@@ -155,6 +160,25 @@ two-color-cross-cubes:
 		--sort-zero-edges \
 		--zero-red-degree-at-most-half \
 		--partial-sym-break 20
+
+two-color-cross-adaptive-cubes:
+	-$(PYSAT_PYTHON) enc/two_color_cross_adaptive_cube_search.py \
+		-m 6 \
+		--depths 6,8,10,12 \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 200000 \
+		--stop-on-sat \
+		--sort-zero-edges \
+		--zero-red-degree-at-most-half \
+		--partial-sym-break 20
+
+two-color-product-holes:
+	$(PYSAT_PYTHON) enc/two_color_product_hole_analysis.py -m 4 --hole-count 2
+	-$(PYSAT_PYTHON) enc/two_color_product_hole_analysis.py \
+		-m 6 \
+		--hole-count 2 \
+		--conflict-budget 500000
 
 bicross-quantitative-construction:
 	$(PYTHON) enc/bicross_frontier_construction.py -m 8 --show-components

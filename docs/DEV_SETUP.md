@@ -113,6 +113,11 @@ the fixed paired-left target through Q6, all Q6 paired-block product targets,
 and a bounded Q7 paired-left stress test.
 `make two-color-cross-cubes` runs the first Q6 cube-and-conquer pass for the
 full two-color cross-cover negation.
+`make two-color-cross-adaptive-cubes` runs the staged Q6 nested-prefix replay
+for depths 6, 8, 10, and 12.
+`make two-color-product-holes` classifies two-hole near-covers in the
+canonical paired-block product target, with a quick Q4 pass and a bounded Q6
+orbit pass.
 
 `make bicross-extremal-shapes` samples exact Q4, Q5, and Q6 pair-hit frontier
 models and prints aggregate component-incidence signatures.  This is the
