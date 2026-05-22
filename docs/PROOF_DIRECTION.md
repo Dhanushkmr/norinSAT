@@ -309,7 +309,9 @@ two antipodal middle pairs.  A representative Q6 extremal model has its whole
 good set as another product target under the crossed pairing
 `(0,3),(1,5),(2,4)`, avoiding `11` in each crossed pair.  In Q7, the
 predicted four-hole extremal is SAT at 50/54 bad product-box vertices, but
-forcing 51/54 bad vertices is still UNKNOWN at 1M conflicts.
+forcing 51/54 bad vertices is still UNKNOWN: a 10M-conflict CaDiCaL run,
+shallow prefix/spread cube scouts, and a 20-minute three-solver portfolio all
+failed to decide it.
 
 The current falsification target is the conjunction `high pair-hit + no cell
 antipodal pair + no perfect inherited split`.  It is UNSAT for the Q4 frontier,

@@ -18,6 +18,7 @@ PY_SOURCES = \
 	enc/two_color_cross_cube_search.py \
 	enc/two_color_cross_adaptive_cube_search.py \
 	enc/two_color_product_hole_analysis.py \
+	enc/two_color_product_bound_cube_search.py \
 	enc/group_structure_probe.py \
 	enc/bicross_lift_search.py \
 	enc/sat_portfolio.py \
@@ -34,7 +35,7 @@ PY_SOURCES = \
 	enc/test_group_structure_probe.py \
 	enc/test_bicross_probe.py
 
-.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification two-color-cross-probes two-color-cross-cubes two-color-cross-adaptive-cubes two-color-product-holes bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
+.PHONY: test test-sat test-all list-solvers group-structure-probes group-geometry-baseline group-affine-falsification two-color-cross-probes two-color-cross-cubes two-color-cross-adaptive-cubes two-color-product-holes two-color-product-bound-cubes bicross-quantitative-construction bicross-good-count-falsification bicross-bad-structure bicross-branch-samples bicross-branch-falsification bicross-branch-cubes bicross-branch-adaptive-cubes bicross-extremal-shapes bicross-no-cell-frontier bicross-dichotomy-checks bicross-q7-portfolio bicross-q7-full-cubes bicross-q7-lift-search bicross-q6-frontier bicross-q6-cubes bicross-q6-hit31-proof bicross-q6-hit30-proof bicross-q6-hit29-proof
 
 test:
 	$(PYTHON) -m py_compile $(PY_SOURCES)
@@ -181,6 +182,17 @@ two-color-product-holes:
 		--hole-count 2 \
 		--conflict-budget 500000 \
 		--hide-unsat-orbits
+
+two-color-product-bound-cubes:
+	-$(PYSAT_PYTHON) enc/two_color_product_bound_cube_search.py \
+		-m 7 \
+		--bad-bound 51 \
+		--cube-depth 8 \
+		--cube-mode spread \
+		--jobs $(JOBS) \
+		--batch-size 4 \
+		--conflict-budget 100000 \
+		--stop-on-sat
 
 bicross-quantitative-construction:
 	$(PYTHON) enc/bicross_frontier_construction.py -m 8 --show-components

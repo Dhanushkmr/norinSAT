@@ -1186,6 +1186,21 @@ Two-color cube/product follow-up, 2026-05-21:
   question remains open computationally: forcing at least 51 of the 54
   product-box vertices bad returned UNKNOWN at 1M conflicts, and three fixed
   three-hole near-covers also returned UNKNOWN at 1M.
+  Longer Q7 follow-up on 2026-05-22 reinforced the hardness rather than
+  resolving it:
+
+  ```text
+  direct CaDiCaL 10M conflicts: UNKNOWN after about 28 minutes
+  prefix cube depth 7, 128 cubes, 200k conflicts/cube: 0 SAT, 0 UNSAT, 128 UNKNOWN
+  spread cube depth 8, 256 cubes, 100k conflicts/cube: 0 SAT, 0 UNSAT, 256 UNKNOWN
+  direct portfolio, CaDiCaL/Glucose/MapleChrono, 20 minutes each: all TIMEOUT
+  ```
+
+  Added `enc/two_color_product_bound_cube_search.py` and
+  `make two-color-product-bound-cubes` so the Q7 51/54 cube scout is
+  reproducible.  The immediate lesson is negative but useful: this formula
+  needs either a sharper encoding or a structural argument; shallow generic
+  cubing does not expose easy UNSAT branches.
 
 - This suggests a narrower human-scale lemma:
 

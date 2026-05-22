@@ -709,7 +709,10 @@ set is another 27-vertex product target under the crossed pairing
 For Q7, the predicted four-hole extremal is SAT: 50 of the 54 canonical
 product-box vertices can be bad, leaving exactly
 `0101010,0101011,1010100,1010101`.  Forcing 51 bad vertices is still UNKNOWN
-at 1M conflicts.
+at 1M conflicts.  A longer follow-up did not break the barrier: CaDiCaL at
+10M conflicts returned UNKNOWN after about 28 minutes, prefix depth-7 and
+spread depth-8 cube scouts left every cube UNKNOWN, and a 20-minute
+CaDiCaL/Glucose/MapleChrono portfolio timed out.
 
 ## One-Switch Geodesic Route
 
